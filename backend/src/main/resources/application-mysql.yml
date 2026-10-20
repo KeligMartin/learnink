@@ -26,6 +26,9 @@ spring:
     password: ${LEARNINK_DB_PASSWORD:}
     hikari:
       maximum-pool-size: ${LEARNINK_DB_POOL_SIZE:5}
+      # Aucune connexion gardée ouverte sans activité : libère le quota de connexions de l'hébergeur
+      minimum-idle: 0
+      idle-timeout: 30000
   jpa:
     hibernate:
       # Le schéma est créé par les migrations Flyway (db/migration) ; Hibernate se contente de le vérifier

@@ -7,8 +7,10 @@ import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.Statements;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.util.TablesNamesFinder;
 import org.springframework.stereotype.Component;
 
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,7 +52,20 @@ public class SelectOnlyQueryValidator {
         if (FORBIDDEN.matcher(SqlText.stripLiteralsAndComments(sql)).find()) {
             throw new QueryRejectedException("La requête utilise une fonction ou une clause interdite.");
         }
+        assertNoProtectedTable(sql);
         return sql;
+    }
+
+    private static void assertNoProtectedTable(String sql) {
+        Set<String> tables;
+        try {
+            tables = TablesNamesFinder.findTables(sql);
+        } catch (JSQLParserException e) {
+            throw new QueryRejectedException("Erreur de syntaxe SQL : " + firstLine(e));
+        }
+        tables.stream().filter(ProtectedTables::isProtected).findFirst().ifPresent(table -> {
+            throw new QueryRejectedException("La table « " + table + " » n'est pas accessible.");
+        });
     }
 
     private Statement parseSingleStatement(String query) {

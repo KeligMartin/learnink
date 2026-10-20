@@ -53,4 +53,27 @@ class SelectOnlyQueryValidatorTest {
         assertThatThrownBy(() -> validator.validate("SELECT id FROM batiment WHERE"))
                 .hasMessage("Erreur de syntaxe SQL : élément inattendu « WHERE » (ligne 1, colonne 25).");
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "SELECT email, password_hash FROM app_user",
+            "SELECT * FROM APP_USER",
+            "SELECT reference_query FROM `exercise`",
+            "SELECT nom FROM batiment WHERE id IN (SELECT user_id FROM submission)",
+            "SELECT * FROM information_schema.tables",
+            "SELECT user, authentication_string FROM mysql.user",
+            "SELECT * FROM learnink.flyway_schema_history",
+    })
+    void rejectsApplicationAndSystemTables(String query) {
+        assertThatThrownBy(() -> validator.validate(query))
+                .isInstanceOf(QueryRejectedException.class)
+                .hasMessageContaining("n'est pas accessible");
+    }
+
+    @Test
+    void acceptsBusinessTablesAndCommonTableExpressions() {
+        assertThat(validator.validate(
+                "WITH stats AS (SELECT batiment_id, COUNT(*) AS n FROM chambre GROUP BY batiment_id) "
+                        + "SELECT b.nom, s.n FROM batiment b JOIN stats s ON s.batiment_id = b.id")).isNotBlank();
+    }
 }

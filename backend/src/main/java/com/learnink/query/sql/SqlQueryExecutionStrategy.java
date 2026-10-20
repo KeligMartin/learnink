@@ -137,10 +137,10 @@ public class SqlQueryExecutionStrategy implements QueryExecutionStrategy {
             try (ResultSet tableRows = metaData.getTables(catalog, schemaName, "%", null)) {
                 while (tableRows.next()) {
                     String type = tableRows.getString("TABLE_TYPE");
-                    if (type != null && type.toUpperCase().contains("SYSTEM")) {
+                    String tableName = tableRows.getString("TABLE_NAME");
+                    if (type != null && type.toUpperCase().contains("SYSTEM") || ProtectedTables.isProtected(tableName)) {
                         continue;
                     }
-                    String tableName = tableRows.getString("TABLE_NAME");
                     tables.add(new SchemaDescription.Table(tableName,
                             loadColumns(metaData, catalog, schemaName, tableName)));
                 }

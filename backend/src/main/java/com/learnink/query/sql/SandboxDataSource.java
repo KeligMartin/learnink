@@ -13,6 +13,8 @@ import java.sql.SQLException;
  */
 public class SandboxDataSource implements AutoCloseable {
 
+    private static final long IDLE_TIMEOUT_MS = 30_000;
+
     private final HikariDataSource pool = new HikariDataSource();
 
     public SandboxDataSource(int number, SandboxProperties.Datasource properties) {
@@ -22,6 +24,9 @@ public class SandboxDataSource implements AutoCloseable {
         pool.setPassword(properties.password());
         pool.setMaximumPoolSize(properties.maximumPoolSize());
         pool.setReadOnly(true);
+        // Aucune connexion gardée ouverte sans activité : libère le quota de connexions de l'hébergeur
+        pool.setMinimumIdle(0);
+        pool.setIdleTimeout(IDLE_TIMEOUT_MS);
         if (properties.connectionInitSql() != null && !properties.connectionInitSql().isBlank()) {
             pool.setConnectionInitSql(properties.connectionInitSql());
         }
