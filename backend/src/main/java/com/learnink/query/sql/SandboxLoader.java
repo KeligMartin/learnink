@@ -49,7 +49,7 @@ public class SandboxLoader implements ApplicationRunner {
     }
 
     @Override
-    public void run(ApplicationArguments args) throws IOException, SQLException {
+    public void run(ApplicationArguments args) throws IOException {
         SandboxInitMode mode = properties.effectiveInitMode();
         if (mode == SandboxInitMode.NEVER) {
             return;
@@ -66,7 +66,7 @@ public class SandboxLoader implements ApplicationRunner {
                 continue;
             }
             long start = System.currentTimeMillis();
-            load(entry.getValue(), scripts);
+            load(number, entry.getValue(), scripts);
             if (mode == SandboxInitMode.IF_CHANGED) {
                 storeChecksum(number, checksum);
             }
@@ -74,13 +74,24 @@ public class SandboxLoader implements ApplicationRunner {
         }
     }
 
-    private void load(SandboxProperties.Datasource datasource, List<Resource> scripts) throws SQLException {
+    private void load(int number, SandboxProperties.Datasource datasource, List<Resource> scripts) {
         try (Connection connection = DriverManager.getConnection(
                 datasource.loadUrl(), datasource.adminUsername(), datasource.adminPassword())) {
             for (Resource script : scripts) {
                 ScriptUtils.executeSqlScript(connection, new EncodedResource(script, StandardCharsets.UTF_8));
             }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Chargement de la base bac à sable n°" + number + " impossible ("
+                    + withoutParameters(datasource.loadUrl()) + ", utilisateur « " + datasource.adminUsername()
+                    + " ») : " + e.getMessage() + ". Vérifier LEARNINK_SANDBOX_" + number + "_URL et "
+                    + "LEARNINK_SANDBOX_" + number + "_ADMIN_USER / _ADMIN_PASSWORD (propriétaire de cette base).", e);
         }
+    }
+
+    /** URL JDBC sans ses paramètres, pour les messages d'erreur. */
+    private static String withoutParameters(String url) {
+        int index = url.indexOf('?');
+        return index < 0 ? url : url.substring(0, index);
     }
 
     private Optional<String> storedChecksum(int number) {
