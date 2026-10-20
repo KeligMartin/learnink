@@ -1,0 +1,48 @@
+# Environnement proche de la production : MySQL 8.4 + application (frontend inclus).
+#   cp .env.example .env   (puis renseigner les mots de passe)
+#   docker compose up --build
+#   -> http://localhost:8080
+services:
+  db:
+    build: ./docker/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?}
+      MYSQL_DATABASE: learnink
+      MYSQL_USER: learnink
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?}
+      LEARNINK_SANDBOX_PASSWORD: ${LEARNINK_SANDBOX_PASSWORD:?}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.vercel
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: mysql
+      # En local, sans TLS : allowPublicKeyRetrieval est nécessaire à l'authentification MySQL 8
+      LEARNINK_DB_URL: jdbc:mysql://db:3306/learnink?allowPublicKeyRetrieval=true&useSSL=false
+      LEARNINK_DB_USER: learnink
+      LEARNINK_DB_PASSWORD: ${MYSQL_PASSWORD:?}
+      LEARNINK_SANDBOX_1_URL: jdbc:mysql://db:3306/learnink_sandbox_1?allowPublicKeyRetrieval=true&useSSL=false
+      LEARNINK_SANDBOX_1_PASSWORD: ${LEARNINK_SANDBOX_PASSWORD:?}
+      # Source 2 : renseigner l'URL une fois le second jeu de données ajouté
+      # LEARNINK_SANDBOX_2_URL: jdbc:mysql://db:3306/learnink_sandbox_2?allowPublicKeyRetrieval=true&useSSL=false
+      LEARNINK_SANDBOX_2_PASSWORD: ${LEARNINK_SANDBOX_PASSWORD:?}
+      LEARNINK_JWT_SECRET: ${LEARNINK_JWT_SECRET:?}
+      LEARNINK_TEACHER_EMAIL: ${LEARNINK_TEACHER_EMAIL:-}
+      LEARNINK_TEACHER_PASSWORD: ${LEARNINK_TEACHER_PASSWORD:-}
+    ports:
+      - "8080:8080"
+    mem_limit: 2g
+
+volumes:
+  mysql-data:

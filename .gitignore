@@ -1,0 +1,16 @@
+# Backend
+backend/target/
+backend/data/
+*.log
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# IDE / OS
+.idea/workspace.xml
+.idea/shelf/
+.DS_Store
+
+# Secrets locaux (docker compose)
+.env

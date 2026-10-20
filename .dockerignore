@@ -1,0 +1,11 @@
+.git
+.idea
+.claude
+*.iml
+**/.DS_Store
+frontend/node_modules
+frontend/dist
+backend/target
+backend/data
+docker
+.env
