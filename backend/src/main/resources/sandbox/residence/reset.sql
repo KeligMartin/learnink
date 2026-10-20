@@ -1,0 +1,26 @@
+-- Supprime les tables de la base bac à sable (ordre inverse des dépendances) avant rechargement.
+DROP TABLE IF EXISTS avance_depense;
+DROP TABLE IF EXISTS depense;
+DROP TABLE IF EXISTS participation_evenement;
+DROP TABLE IF EXISTS formation;
+DROP TABLE IF EXISTS intervention;
+DROP TABLE IF EXISTS tache;
+DROP TABLE IF EXISTS fournisseur_ingredient;
+DROP TABLE IF EXISTS fournisseur;
+DROP TABLE IF EXISTS plat_ingredient;
+DROP TABLE IF EXISTS ingredient;
+DROP TABLE IF EXISTS plat_incompatibilite;
+DROP TABLE IF EXISTS etudiant_contrainte;
+DROP TABLE IF EXISTS contrainte_alimentaire;
+DROP TABLE IF EXISTS reservation;
+DROP TABLE IF EXISTS repas;
+DROP TABLE IF EXISTS evenement;
+DROP TABLE IF EXISTS composition_menu;
+DROP TABLE IF EXISTS plat;
+DROP TABLE IF EXISTS type_plat;
+DROP TABLE IF EXISTS menu;
+DROP TABLE IF EXISTS type_repas;
+DROP TABLE IF EXISTS occupation;
+DROP TABLE IF EXISTS etudiant;
+DROP TABLE IF EXISTS chambre;
+DROP TABLE IF EXISTS batiment;

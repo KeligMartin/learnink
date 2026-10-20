@@ -14,3 +14,11 @@ frontend/dist/
 
 # Secrets locaux (docker compose)
 .env
+
+# Configuration locale des connexions aux bases (IntelliJ) : adresses des serveurs
+.idea/dataSources.xml
+.idea/dataSources/
+.idea/dataSources.local.xml
+
+# Cache de compilation TypeScript
+*.tsbuildinfo

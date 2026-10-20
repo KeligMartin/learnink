@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: learnink
+  profiles:
+    default: dev
+  jpa:
+    open-in-view: false
+  jackson:
+    default-property-inclusion: non_null
+
+server:
+  # Port fourni par l'hébergeur via la variable PORT (sur Vercel : PORT=8080 dans les variables du projet)
+  port: ${PORT:8080}
+  error:
+    include-message: always
+  compression:
+    enabled: true
+    mime-types: text/html,text/css,application/javascript,text/javascript,application/json,image/svg+xml
+    min-response-size: 1KB
+  # Derrière le proxy HTTPS de l'hébergeur
+  forward-headers-strategy: framework
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+learnink:
+  security:
+    # Surcharger en production via la variable d'environnement LEARNINK_JWT_SECRET (>= 32 caractères)
+    jwt-secret: ${LEARNINK_JWT_SECRET:dev-only-secret-change-me-please-0123456789abcdef}
+    jwt-validity: 8h
+    allowed-origins: http://localhost:5173
+  sandbox:
+    # Bases "bac à sable" interrogées par les étudiants (connexions en lecture seule), une par source de données :
+    # voir learnink.sandbox.datasources dans les profils dev et mysql
+    query-timeout-seconds: 5
+    max-compared-rows: 10000
+    max-displayed-rows: 200
+  seed:
+    exercises: true
+    demo-users: false
+  # Premier compte enseignant, créé au démarrage s'il n'existe pas (mot de passe à changer à la première connexion)
+  bootstrap:
+    teacher-email: ${LEARNINK_TEACHER_EMAIL:}
+    teacher-password: ${LEARNINK_TEACHER_PASSWORD:}

@@ -1,0 +1,324 @@
+[
+  {
+    "code": "res-1-01",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 1,
+    "position": 1,
+    "title": "Les bâtiments de la résidence",
+    "statement": "Affichez le nom et l'adresse de tous les bâtiments de la résidence, triés par nom.\n\nTable utile : `batiment`.",
+    "referenceQuery": "SELECT nom, adresse FROM batiment ORDER BY nom",
+    "orderMatters": true
+  },
+  {
+    "code": "res-1-02",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 1,
+    "position": 2,
+    "title": "Chambres partagées",
+    "statement": "Affichez le numéro, l'étage et la capacité des chambres pouvant accueillir au moins 2 personnes, triées par numéro.\n\nTable utile : `chambre`.",
+    "referenceQuery": "SELECT numero, etage, capacite FROM chambre WHERE capacite >= 2 ORDER BY numero",
+    "orderMatters": true
+  },
+  {
+    "code": "res-1-03",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 1,
+    "position": 3,
+    "title": "Les petits prix",
+    "statement": "Affichez le nom et le prix indicatif des plats coûtant strictement moins de 1,50 €, du moins cher au plus cher. En cas d'égalité de prix, triez par nom.\n\nTable utile : `plat`.",
+    "referenceQuery": "SELECT nom, prix_indicatif FROM plat WHERE prix_indicatif < 1.5 ORDER BY prix_indicatif, nom",
+    "orderMatters": true
+  },
+  {
+    "code": "res-1-04",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 1,
+    "position": 4,
+    "title": "Ingrédients à commander",
+    "statement": "Le restaurant doit recommander les ingrédients dont le stock est passé sous la quantité minimale à conserver.\n\nAffichez leur nom, leur stock et leur stock minimum.\n\nIndice : on peut comparer deux colonnes entre elles dans un `WHERE`.",
+    "referenceQuery": "SELECT nom, stock, stock_minimum FROM ingredient WHERE stock < stock_minimum",
+    "orderMatters": false
+  },
+  {
+    "code": "res-1-05",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 1,
+    "position": 5,
+    "title": "Occupations en cours",
+    "statement": "Une occupation est en cours lorsque sa date de fin n'est pas renseignée.\n\nAffichez l'identifiant de l'étudiant, l'identifiant de la chambre et la date de début de toutes les occupations en cours.\n\nTable utile : `occupation`.",
+    "referenceQuery": "SELECT etudiant_id, chambre_id, date_debut FROM occupation WHERE date_fin IS NULL",
+    "orderMatters": false
+  },
+  {
+    "code": "res-1-06",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 1,
+    "position": 6,
+    "title": "Les événements de 2026",
+    "statement": "Affichez le nom, la date et le lieu des événements ayant lieu en 2026, dans l'ordre chronologique.\n\nAstuce de performance : comparez la date à un intervalle plutôt que d'appliquer une fonction à la colonne.",
+    "referenceQuery": "SELECT nom, date_evenement, lieu FROM evenement WHERE date_evenement >= DATE '2026-01-01' AND date_evenement < DATE '2027-01-01' ORDER BY date_evenement",
+    "orderMatters": true
+  },
+  {
+    "code": "res-1-07",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 1,
+    "position": 7,
+    "title": "Les soirées pizza",
+    "statement": "Affichez le nom et la date de tous les événements dont le nom contient le mot « pizza ».\n\nIndice : l'opérateur `LIKE` et le joker `%`.",
+    "referenceQuery": "SELECT nom, date_evenement FROM evenement WHERE nom LIKE '%pizza%'",
+    "orderMatters": false
+  },
+  {
+    "code": "res-1-08",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 1,
+    "position": 8,
+    "title": "Combien d'annulations ?",
+    "statement": "Comptez le nombre de réservations qui ont été annulées.\n\nIndice : la fonction `COUNT(*)` compte les lignes sélectionnées.",
+    "referenceQuery": "SELECT COUNT(*) AS nb_annulations FROM reservation WHERE annulee = TRUE",
+    "orderMatters": false
+  },
+  {
+    "code": "res-1-09",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 1,
+    "position": 9,
+    "title": "Prix moyen d'un plat",
+    "statement": "Calculez le prix indicatif moyen de l'ensemble des plats, arrondi à 2 décimales.\n\nIndice : les fonctions `AVG()` et `ROUND(valeur, 2)`.",
+    "referenceQuery": "SELECT ROUND(AVG(prix_indicatif), 2) AS prix_moyen FROM plat",
+    "orderMatters": false
+  },
+  {
+    "code": "res-2-01",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 2,
+    "position": 1,
+    "title": "Qui habite où ?",
+    "statement": "Pour chaque occupation en cours, affichez le prénom et le nom de l'étudiant, le numéro de sa chambre et le nom du bâtiment.\n\nTables utiles : `occupation`, `etudiant`, `chambre`, `batiment`.",
+    "referenceQuery": "SELECT e.prenom, e.nom, c.numero, b.nom AS batiment FROM occupation o JOIN etudiant e ON e.id = o.etudiant_id JOIN chambre c ON c.id = o.chambre_id JOIN batiment b ON b.id = c.batiment_id WHERE o.date_fin IS NULL",
+    "orderMatters": false
+  },
+  {
+    "code": "res-2-02",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 2,
+    "position": 2,
+    "title": "Le menu de la soirée pizza",
+    "statement": "Affichez le nom et le type de chaque plat du menu « Menu soirée pizza », dans l'ordre où ils sont servis.\n\nTables utiles : `menu`, `composition_menu`, `plat`, `type_plat`.",
+    "referenceQuery": "SELECT p.nom, tp.libelle FROM composition_menu cm JOIN menu m ON m.id = cm.menu_id JOIN plat p ON p.id = cm.plat_id JOIN type_plat tp ON tp.id = p.type_plat_id WHERE m.nom = 'Menu soirée pizza' ORDER BY cm.ordre",
+    "orderMatters": true
+  },
+  {
+    "code": "res-2-04",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 2,
+    "position": 3,
+    "title": "La recette de la crêpe",
+    "statement": "Affichez le nom, la quantité et l'unité de mesure de chaque ingrédient nécessaire à la préparation du plat « Crêpe au sucre ».\n\nTables utiles : `plat`, `plat_ingredient`, `ingredient`.",
+    "referenceQuery": "SELECT i.nom, pi.quantite, i.unite FROM plat p JOIN plat_ingredient pi ON pi.plat_id = p.id JOIN ingredient i ON i.id = pi.ingredient_id WHERE p.nom = 'Crêpe au sucre'",
+    "orderMatters": false
+  },
+  {
+    "code": "res-2-05",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 2,
+    "position": 4,
+    "title": "Comparer les fournisseurs",
+    "statement": "Le restaurant cherche le meilleur prix pour le sucre. Affichez le nom de chaque fournisseur proposant l'ingrédient « Sucre », son prix et l'unité d'achat, du moins cher au plus cher.\n\nTables utiles : `ingredient`, `fournisseur_ingredient`, `fournisseur`.",
+    "referenceQuery": "SELECT f.nom, fi.prix, fi.unite_achat FROM fournisseur_ingredient fi JOIN fournisseur f ON f.id = fi.fournisseur_id JOIN ingredient i ON i.id = fi.ingredient_id WHERE i.nom = 'Sucre' ORDER BY fi.prix",
+    "orderMatters": true
+  },
+  {
+    "code": "res-2-09",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 2,
+    "position": 5,
+    "title": "L'équipe de la soirée internationale",
+    "statement": "Affichez le prénom, le nom et le rôle de chaque étudiant ayant participé à l'organisation de l'événement « Soirée internationale ».\n\nTables utiles : `evenement`, `participation_evenement`, `etudiant`.",
+    "referenceQuery": "SELECT e.prenom, e.nom, pe.role FROM participation_evenement pe JOIN etudiant e ON e.id = pe.etudiant_id JOIN evenement ev ON ev.id = pe.evenement_id WHERE ev.nom = 'Soirée internationale'",
+    "orderMatters": false
+  },
+  {
+    "code": "res-2-10",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 2,
+    "position": 6,
+    "title": "Interdit aux végétariens",
+    "statement": "Affichez le nom des plats incompatibles avec la contrainte alimentaire « Végétarien ».\n\nTables utiles : `plat`, `plat_incompatibilite`, `contrainte_alimentaire`.",
+    "referenceQuery": "SELECT p.nom FROM plat p JOIN plat_incompatibilite pi ON pi.plat_id = p.id JOIN contrainte_alimentaire c ON c.id = pi.contrainte_id WHERE c.libelle = 'Végétarien'",
+    "orderMatters": false
+  },
+  {
+    "code": "res-2-11",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 2,
+    "position": 7,
+    "title": "Événements sans repas",
+    "statement": "Certains événements ne donnent lieu à aucun repas spécial. Affichez le nom et la date de ces événements.\n\nIndice : une jointure externe (`LEFT JOIN`) conserve les événements sans repas associé ; les colonnes du repas y valent alors `NULL`.",
+    "referenceQuery": "SELECT e.nom, e.date_evenement FROM evenement e LEFT JOIN repas r ON r.evenement_id = e.id WHERE r.id IS NULL",
+    "orderMatters": false
+  },
+  {
+    "code": "res-2-12",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 2,
+    "position": 8,
+    "title": "Qui a formé qui ?",
+    "statement": "La table `formation` relie deux étudiants : le formateur (`formateur_id`) et l'étudiant formé (`forme_id`).\n\nAffichez, pour chaque formation, le prénom et le nom du formateur, le prénom et le nom de l'étudiant formé, et la date de début.\n\nIndice : joignez deux fois la table `etudiant`, avec deux alias différents.",
+    "referenceQuery": "SELECT formateur.prenom, formateur.nom, forme.prenom, forme.nom, f.date_debut FROM formation f JOIN etudiant formateur ON formateur.id = f.formateur_id JOIN etudiant forme ON forme.id = f.forme_id",
+    "orderMatters": false
+  },
+  {
+    "code": "res-3-10",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 3,
+    "position": 1,
+    "title": "Chambres par capacité",
+    "statement": "Affichez, pour chaque capacité de chambre (1, 2, 3 personnes...), le nombre de chambres correspondantes, par capacité croissante.\n\nLe graphique se construit à partir du résultat de votre requête : la première colonne donne les libellés, la seconde les valeurs.",
+    "referenceQuery": "SELECT capacite, COUNT(*) AS nb_chambres FROM chambre GROUP BY capacite ORDER BY capacite",
+    "orderMatters": true,
+    "chart": {
+      "type": "BAR",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "res-3-11",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 3,
+    "position": 2,
+    "title": "Capacité d'accueil par bâtiment",
+    "statement": "Affichez le nom de chaque bâtiment et sa capacité totale d'accueil (somme des capacités de ses chambres), triés par nom de bâtiment.",
+    "referenceQuery": "SELECT b.nom, SUM(c.capacite) AS capacite_totale FROM batiment b JOIN chambre c ON c.batiment_id = b.id GROUP BY b.id, b.nom ORDER BY b.nom",
+    "orderMatters": true,
+    "chart": {
+      "type": "BAR",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "res-3-12",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 3,
+    "position": 3,
+    "title": "Réservations par type de repas",
+    "statement": "Affichez le libellé de chaque type de repas et le nombre de réservations non annulées correspondantes, du type le plus réservé au moins réservé.\n\nTables utiles : `reservation`, `repas`, `type_repas`.",
+    "referenceQuery": "SELECT t.libelle, COUNT(*) AS nb_reservations FROM reservation r JOIN repas re ON re.id = r.repas_id JOIN type_repas t ON t.id = re.type_repas_id WHERE r.annulee = FALSE GROUP BY t.id, t.libelle ORDER BY nb_reservations DESC",
+    "orderMatters": true,
+    "chart": {
+      "type": "DOUGHNUT",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "res-3-13",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 3,
+    "position": 4,
+    "title": "Fréquentation mois par mois",
+    "statement": "Pour l'année universitaire 2025-2026 (repas servis avant le 1er juillet 2026), affichez l'année, le mois et le nombre de réservations non annulées, dans l'ordre chronologique.\n\nIndice : on peut regrouper sur plusieurs expressions, par exemple `GROUP BY YEAR(...), MONTH(...)`.",
+    "referenceQuery": "SELECT YEAR(r.date_heure) AS annee, MONTH(r.date_heure) AS mois, COUNT(*) AS nb_reservations FROM reservation re JOIN repas r ON r.id = re.repas_id WHERE re.annulee = FALSE AND r.date_heure < DATE '2026-07-01' GROUP BY YEAR(r.date_heure), MONTH(r.date_heure) ORDER BY annee, mois",
+    "orderMatters": true,
+    "chart": {
+      "type": "LINE",
+      "labelColumns": 2
+    }
+  },
+  {
+    "code": "res-3-14",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 3,
+    "position": 5,
+    "title": "Contraintes alimentaires déclarées",
+    "statement": "Affichez le libellé de chaque contrainte alimentaire et le nombre d'étudiants l'ayant déclarée, de la plus fréquente à la moins fréquente. En cas d'égalité, triez par libellé.\n\nLes contraintes déclarées par aucun étudiant doivent apparaître avec 0 : pensez au `LEFT JOIN` et à `COUNT(colonne)`, qui ne compte pas les `NULL`.",
+    "referenceQuery": "SELECT c.libelle, COUNT(ec.etudiant_id) AS nb_etudiants FROM contrainte_alimentaire c LEFT JOIN etudiant_contrainte ec ON ec.contrainte_id = c.id GROUP BY c.id, c.libelle ORDER BY nb_etudiants DESC, c.libelle",
+    "orderMatters": true,
+    "chart": {
+      "type": "HORIZONTAL_BAR",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "res-3-15",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 3,
+    "position": 6,
+    "title": "Prix moyen par type de plat",
+    "statement": "Affichez le libellé de chaque type de plat et le prix indicatif moyen de ses plats, arrondi à 2 décimales, du type le plus cher au moins cher.",
+    "referenceQuery": "SELECT tp.libelle, ROUND(AVG(p.prix_indicatif), 2) AS prix_moyen FROM type_plat tp JOIN plat p ON p.type_plat_id = tp.id GROUP BY tp.id, tp.libelle ORDER BY prix_moyen DESC",
+    "orderMatters": true,
+    "chart": {
+      "type": "BAR",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "res-3-16",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 3,
+    "position": 7,
+    "title": "Les absents récidivistes",
+    "statement": "Un étudiant est absent lorsqu'il a réservé un repas (réservation non annulée) mais n'est pas venu manger (`present` faux).\n\nAffichez le prénom, le nom et le nombre d'absences des étudiants ayant au moins 20 absences, du plus grand nombre d'absences au plus petit.\n\nIndice : `WHERE` filtre les lignes avant le regroupement, `HAVING` filtre les groupes après.",
+    "referenceQuery": "SELECT e.prenom, e.nom, COUNT(*) AS nb_absences FROM etudiant e JOIN reservation r ON r.etudiant_id = e.id WHERE r.annulee = FALSE AND r.present = FALSE GROUP BY e.id, e.prenom, e.nom HAVING COUNT(*) >= 20 ORDER BY nb_absences DESC",
+    "orderMatters": false,
+    "chart": {
+      "type": "BAR",
+      "labelColumns": 2
+    }
+  },
+  {
+    "code": "res-3-17",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 3,
+    "position": 8,
+    "title": "Recettes élaborées",
+    "statement": "Affichez le nom et le nombre d'ingrédients des plats nécessitant au moins 5 ingrédients, du plus grand nombre au plus petit.",
+    "referenceQuery": "SELECT p.nom, COUNT(*) AS nb_ingredients FROM plat p JOIN plat_ingredient pi ON pi.plat_id = p.id GROUP BY p.id, p.nom HAVING COUNT(*) >= 5 ORDER BY nb_ingredients DESC",
+    "orderMatters": false,
+    "chart": {
+      "type": "HORIZONTAL_BAR",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "res-3-18",
+    "engine": "SQL",
+    "datasource": 1,
+    "level": 3,
+    "position": 9,
+    "title": "Les événements les plus coûteux",
+    "statement": "Affichez le nom de chaque événement dont le total des dépenses dépasse 300 €, avec ce total, du plus coûteux au moins coûteux.",
+    "referenceQuery": "SELECT ev.nom, SUM(d.montant) AS total_depenses FROM evenement ev JOIN depense d ON d.evenement_id = ev.id GROUP BY ev.id, ev.nom HAVING SUM(d.montant) > 300 ORDER BY total_depenses DESC",
+    "orderMatters": true,
+    "chart": {
+      "type": "BAR",
+      "labelColumns": 1
+    }
+  }
+]

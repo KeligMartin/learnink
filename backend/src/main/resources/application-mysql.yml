@@ -1,0 +1,68 @@
+# Profil de production (MySQL 8) : SPRING_PROFILES_ACTIVE=mysql
+#
+# Base applicative (comptes, exercices, progression)
+#   LEARNINK_DB_URL             ex. jdbc:mysql://hote:3306/learnink?sslMode=VERIFY_IDENTITY
+#   LEARNINK_DB_USER / LEARNINK_DB_PASSWORD
+#   LEARNINK_DB_POOL_SIZE       connexions par instance (défaut 5)
+#
+# Sources de données (une base bac à sable par jeu de données ; n = 1 ou 2)
+#   LEARNINK_SANDBOX_n_URL      ex. jdbc:mysql://hote:3306/learnink_sandbox_1?sslMode=VERIFY_IDENTITY
+#                               (source 2 ignorée si LEARNINK_SANDBOX_2_URL est vide)
+#   LEARNINK_SANDBOX_n_NAME     libellé affiché à l'enseignant
+#   LEARNINK_SANDBOX_n_USER / LEARNINK_SANDBOX_n_PASSWORD
+#                               utilisateur des requêtes étudiantes : SELECT uniquement sur cette base
+#   LEARNINK_SANDBOX_n_ADMIN_USER / LEARNINK_SANDBOX_n_ADMIN_PASSWORD
+#                               utilisateur qui charge les données (par défaut : l'utilisateur applicatif)
+#   LEARNINK_SANDBOX_n_POOL_SIZE    connexions par instance (défaut 10)
+#   LEARNINK_SANDBOX_INIT       if-changed (défaut), always ou never
+#
+# Divers
+#   LEARNINK_JWT_SECRET         secret de signature des jetons (>= 32 caractères)
+#   LEARNINK_TEACHER_EMAIL / LEARNINK_TEACHER_PASSWORD   premier compte enseignant
+spring:
+  datasource:
+    url: ${LEARNINK_DB_URL:jdbc:mysql://localhost:3306/learnink}
+    username: ${LEARNINK_DB_USER:learnink}
+    password: ${LEARNINK_DB_PASSWORD:}
+    hikari:
+      maximum-pool-size: ${LEARNINK_DB_POOL_SIZE:5}
+  jpa:
+    hibernate:
+      # Le schéma est créé par les migrations Flyway (db/migration) ; Hibernate se contente de le vérifier
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+learnink:
+  security:
+    # Le frontend est servi par l'application elle-même : aucune autre origine n'est autorisée
+    allowed-origins: ""
+  sandbox:
+    # Chaque base n'est rechargée que si son jeu de données a changé (empreinte conservée dans la table sandbox_state)
+    init-mode: ${LEARNINK_SANDBOX_INIT:if-changed}
+    datasources:
+      1:
+        name: ${LEARNINK_SANDBOX_1_NAME:Résidence universitaire}
+        url: ${LEARNINK_SANDBOX_1_URL:jdbc:mysql://localhost:3306/learnink_sandbox_1}
+        username: ${LEARNINK_SANDBOX_1_USER:lecteur}
+        password: ${LEARNINK_SANDBOX_1_PASSWORD:}
+        admin-username: ${LEARNINK_SANDBOX_1_ADMIN_USER:${LEARNINK_DB_USER:learnink}}
+        admin-password: ${LEARNINK_SANDBOX_1_ADMIN_PASSWORD:${LEARNINK_DB_PASSWORD:}}
+        maximum-pool-size: ${LEARNINK_SANDBOX_1_POOL_SIZE:10}
+        # Garantit que toute colonne du SELECT hors agrégat figure dans le GROUP BY (défaut MySQL 8, imposé au cas où)
+        connection-init-sql: SET SESSION sql_mode = CONCAT(@@sql_mode, ',ONLY_FULL_GROUP_BY')
+        scripts:
+          - classpath:sandbox/residence/reset.sql
+          - classpath:sandbox/residence/schema.sql
+          - classpath:sandbox/residence/data.sql
+      2:
+        name: ${LEARNINK_SANDBOX_2_NAME:Source 2}
+        url: ${LEARNINK_SANDBOX_2_URL:}
+        username: ${LEARNINK_SANDBOX_2_USER:lecteur}
+        password: ${LEARNINK_SANDBOX_2_PASSWORD:}
+        admin-username: ${LEARNINK_SANDBOX_2_ADMIN_USER:${LEARNINK_DB_USER:learnink}}
+        admin-password: ${LEARNINK_SANDBOX_2_ADMIN_PASSWORD:${LEARNINK_DB_PASSWORD:}}
+        maximum-pool-size: ${LEARNINK_SANDBOX_2_POOL_SIZE:10}
+        connection-init-sql: SET SESSION sql_mode = CONCAT(@@sql_mode, ',ONLY_FULL_GROUP_BY')
+        # À compléter avec les scripts du second jeu de données (reset, schema, data)
+        scripts: []

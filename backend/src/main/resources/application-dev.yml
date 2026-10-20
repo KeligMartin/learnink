@@ -1,0 +1,49 @@
+# Profil de développement : tout tourne en local sur H2 (mode compatibilité MySQL).
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/learnink;MODE=MySQL;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=TRUE
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+  # En développement, le schéma H2 est généré par Hibernate ; Flyway gère la base MySQL
+  flyway:
+    enabled: false
+
+learnink:
+  sandbox:
+    # Bases en mémoire : rechargées à chaque démarrage
+    init-mode: always
+    datasources:
+      1:
+        name: Résidence universitaire
+        # Les paramètres de la base (mode MySQL...) sont fixés à sa création par le compte administrateur (admin-url)
+        url: jdbc:h2:mem:sandbox1
+        admin-url: jdbc:h2:mem:sandbox1;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+        # Utilisateur créé par sandbox/h2/lecteur.sql, avec uniquement le droit SELECT
+        username: lecteur
+        password: lecteur
+        admin-username: sa
+        admin-password:
+        maximum-pool-size: 10
+        scripts:
+          - classpath:sandbox/residence/schema.sql
+          - classpath:sandbox/residence/data.sql
+          - classpath:sandbox/h2/lecteur.sql
+      # Second jeu de données : décommenter une fois ses scripts (et ses exercices "datasource": 2) ajoutés
+      # 2:
+      #   name: Autre jeu de données
+      #   url: jdbc:h2:mem:sandbox2
+      #   admin-url: jdbc:h2:mem:sandbox2;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+      #   username: lecteur
+      #   password: lecteur
+      #   admin-username: sa
+      #   admin-password:
+      #   maximum-pool-size: 10
+      #   scripts:
+      #     - classpath:sandbox/<jeu-2>/schema.sql
+      #     - classpath:sandbox/<jeu-2>/data.sql
+      #     - classpath:sandbox/h2/lecteur.sql
+  seed:
+    demo-users: true
