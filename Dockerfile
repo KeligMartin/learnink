@@ -13,11 +13,17 @@ RUN npm run build
 # --- 2. Backend (tests compris) -----------------------------------------------------------------------------
 FROM maven:3.9-eclipse-temurin-25 AS backend
 WORKDIR /build/backend
+# Téléchargements Maven : chaque requête est retentée, et l'étape entière est relancée jusqu'à 5 fois en cas de
+# coupure réseau avec Maven Central (« Remote host terminated the handshake »)
+ENV MAVEN_ARGS="-B -q -Daether.connector.http.retryHandler.count=5"
 COPY backend/pom.xml ./
-RUN mvn -B -q dependency:go-offline
+RUN for essai in 1 2 3 4 5; do \
+      mvn dependency:go-offline && exit 0; \
+      echo "Téléchargement des dépendances échoué (essai $essai/5), nouvel essai dans 15 s"; sleep 15; \
+    done; exit 1
 COPY backend/src ./src
 COPY --from=frontend /build/frontend/dist ./src/main/resources/static
-RUN mvn -B -q package && cp target/learnink-backend-*.jar /build/app.jar
+RUN mvn package && cp target/learnink-backend-*.jar /build/app.jar
 
 # --- 3. Exécution ---------------------------------------------------------------------------------------------
 FROM eclipse-temurin:25-jre-noble
