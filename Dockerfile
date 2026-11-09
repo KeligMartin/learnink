@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Image unique de Learnink : le frontend React est compilé puis servi par le backend Spring Boot.
-# Nommé Dockerfile.vercel pour être détecté automatiquement par Vercel ; utilisé aussi par docker-compose.yml.
+# Utilisé par Clever Cloud (Dockerfile à la racine), docker-compose.yml et Vercel (vercel.json).
 
 # --- 1. Frontend ---------------------------------------------------------------------------------------------
 FROM node:24-slim AS frontend
@@ -25,9 +25,9 @@ RUN useradd --system --uid 10001 --no-create-home learnink
 WORKDIR /app
 COPY --from=backend /build/app.jar app.jar
 USER learnink
-# Vercel attend le port 80 par défaut : définir aussi PORT=8080 dans les variables d'environnement du projet
+# Port d'écoute attendu par Clever Cloud (et à définir dans les variables du projet sur Vercel)
 ENV PORT=8080
 EXPOSE 8080
-# La JVM s'adapte à la mémoire allouée au conteneur (2 Go par défaut sur Vercel)
+# La JVM s'adapte à la mémoire allouée au conteneur (1 Gio sur une instance XS Clever Cloud)
 ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError"
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

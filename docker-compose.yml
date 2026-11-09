@@ -20,9 +20,7 @@ services:
       retries: 30
 
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile.vercel
+    build: .
     depends_on:
       db:
         condition: service_healthy
@@ -33,6 +31,7 @@ services:
       LEARNINK_DB_USER: learnink
       LEARNINK_DB_PASSWORD: ${MYSQL_PASSWORD:?}
       LEARNINK_SANDBOX_1_URL: jdbc:mysql://db:3306/learnink_sandbox_1?allowPublicKeyRetrieval=true&useSSL=false
+      LEARNINK_SANDBOX_1_USER: lecteur
       LEARNINK_SANDBOX_1_PASSWORD: ${LEARNINK_SANDBOX_PASSWORD:?}
       # Source 2 : renseigner l'URL une fois le second jeu de données ajouté
       # LEARNINK_SANDBOX_2_URL: jdbc:mysql://db:3306/learnink_sandbox_2?allowPublicKeyRetrieval=true&useSSL=false

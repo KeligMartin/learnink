@@ -5,7 +5,7 @@
     "learnink": {
       "root": "./",
       "runtime": "container",
-      "entrypoint": "Dockerfile.vercel"
+      "entrypoint": "Dockerfile"
     }
   },
   "rewrites": [

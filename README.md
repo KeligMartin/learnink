@@ -140,13 +140,13 @@ Options : `--etudiants` (420 candidats par défaut) et `--affluence` (multiplie 
 
 ## Déploiement
 
-L'application est livrée sous forme d'**une seule image Docker** ([Dockerfile.vercel](Dockerfile.vercel)) : le frontend React est
+L'application est livrée sous forme d'**une seule image Docker** ([Dockerfile](Dockerfile)) : le frontend React est
 compilé puis servi par Spring Boot (même origine, donc pas de CORS). Monaco et Chart.js sont embarqués : aucun CDN n'est nécessaire.
 
 | Fichier | Rôle |
 |---|---|
-| `Dockerfile.vercel` | Build frontend (Node 24) → build et tests backend (Maven, JDK 25) → image d'exécution JRE 25. Détecté automatiquement par Vercel |
-| `vercel.json` | Région d'exécution : Francfort (`fra1`) |
+| `Dockerfile` | Build frontend (Node 24) → build et tests backend (Maven, JDK 25) → image d'exécution JRE 25, port 8080 |
+| `vercel.json` | Déploiement alternatif sur Vercel (conteneur, région Francfort) |
 | `deploy/base-externe.sql` | Préparation d'un serveur MySQL 8 externe : base applicative, bases des sources 1 et 2, deux utilisateurs |
 | `docker-compose.yml`, `docker/mysql/` | Environnement complet en local (MySQL 8.4 + application) |
 
@@ -186,24 +186,44 @@ Les fonctions Vercel n'ayant pas d'IP fixe, MySQL doit accepter les connexions d
 base applicative et 10 par source de données (`LEARNINK_DB_POOL_SIZE`, `LEARNINK_SANDBOX_n_POOL_SIZE`) : vérifier la
 limite de connexions de l'offre choisie.
 
-### Avec Clever Cloud
+### Sur Clever Cloud (recommandé)
 
-Un add-on MySQL Clever Cloud ne fournit **qu'une base et un utilisateur propriétaire** (pas de `CREATE DATABASE` ni de
-`CREATE USER` ; des utilisateurs en lecture seule se créent dans la console). Prévoir **un add-on par base** et reporter
-les informations de chaque add-on (onglet *Information* : hôte, port, base, utilisateur, mot de passe) :
+Une instance toujours active, dans le même centre de données que l'add-on MySQL : pas de démarrage à froid et une
+latence minimale vers la base.
 
-| Add-on | Variables Learnink |
+1. **Créer l'application** : *Create → an application → Docker*, depuis le dépôt GitHub (ou par `git push`, voir plus bas).
+   Taille **XS** (1 Gio) : la nano (512 Mio) est juste pour la JVM. Région **Paris**, comme l'add-on.
+2. **Lier l'add-on MySQL** (*Service dependencies*). Ses variables `MYSQL_ADDON_HOST`, `_PORT`, `_DB`, `_USER`,
+   `_PASSWORD` sont injectées et utilisées par défaut pour la base applicative **et** la source de données 1
+   (une seule base : les tables de l'application restent inaccessibles aux requêtes des étudiants).
+3. **Variables d'environnement** de l'application :
+
+| Variable | Valeur |
 |---|---|
-| Base applicative | `LEARNINK_DB_URL` = `jdbc:mysql://<hôte>:<port>/<base>`, `LEARNINK_DB_USER`, `LEARNINK_DB_PASSWORD` (propriétaire) |
-| Source de données 1 | `LEARNINK_SANDBOX_1_URL` = `jdbc:mysql://<hôte>:<port>/<base>` ; `LEARNINK_SANDBOX_1_ADMIN_USER` / `_ADMIN_PASSWORD` = propriétaire ; `LEARNINK_SANDBOX_1_USER` / `_PASSWORD` = utilisateur en lecture seule créé dans la console |
+| `SPRING_PROFILES_ACTIVE` | `mysql` |
+| `CC_HEALTH_CHECK_PATH` | `/actuator/health` |
+| `LEARNINK_JWT_SECRET` | chaîne aléatoire d'au moins 32 caractères |
+| `LEARNINK_TEACHER_EMAIL`, `LEARNINK_TEACHER_PASSWORD` | premier compte enseignant (mot de passe à changer à la 1re connexion) |
+| `LEARNINK_SANDBOX_1_USER`, `LEARNINK_SANDBOX_1_PASSWORD` | recommandé : un utilisateur **en lecture seule** créé dans la console de l'add-on |
+| `LEARNINK_DB_POOL_SIZE`, `LEARNINK_SANDBOX_1_POOL_SIZE` | `2` et `2` avec l'offre MySQL DEV (5 connexions) ; à retirer avec une offre dédiée |
 
-Chaque utilisateur n'a accès qu'à la base de son add-on : mélanger l'hôte, la base et l'utilisateur de deux add-ons
-provoque `Access denied for user ... to database ...`. L'offre DEV est limitée à 5 connexions par utilisateur :
-réduire alors `LEARNINK_DB_POOL_SIZE` et `LEARNINK_SANDBOX_1_POOL_SIZE` à 2.
+4. **Déployer** : chaque push sur la branche suivie (ou `git push clever HEAD:master` vers le dépôt git de l'application,
+   indiqué dans *Information*). Le build Docker (npm, Maven et tests) peut demander plus de mémoire : en cas d'échec
+   faute de mémoire, activer une instance de build dédiée plus grande (*Scalability → build instance*).
 
-### Sur Vercel
+Les déploiements sont sans interruption : la nouvelle instance doit répondre sur `/actuator/health` avant que l'ancienne
+ne s'arrête.
 
-1. Importer le dépôt dans Vercel (ou `vercel deploy`) : `Dockerfile.vercel` est détecté et l'image construite par Vercel.
+**Bases sur des add-ons séparés.** Un add-on MySQL Clever Cloud ne fournit qu'une base et un utilisateur propriétaire.
+Pour séparer la base applicative et une source de données, créer un add-on par base, en lier un à l'application
+(base applicative) et reporter les informations de l'autre (onglet *Information*) :
+`LEARNINK_SANDBOX_1_URL` = `jdbc:mysql://<hôte>:<port>/<base>`, `LEARNINK_SANDBOX_1_ADMIN_USER` / `_ADMIN_PASSWORD`
+= son propriétaire, `LEARNINK_SANDBOX_1_USER` / `_PASSWORD` = son utilisateur en lecture seule. Mélanger l'hôte, la base
+et l'utilisateur de deux add-ons provoque `Access denied for user ... to database ...`.
+
+### Sur Vercel (alternative)
+
+1. Importer le dépôt dans Vercel (ou `vercel deploy`), Framework Preset **Services** : `vercel.json` déclare le conteneur construit depuis `Dockerfile`.
 2. Définir les variables d'environnement du projet (liste complète en tête de `application-mysql.yml`) :
 
 | Variable | Valeur |
@@ -223,7 +243,7 @@ réduire alors `LEARNINK_DB_POOL_SIZE` et `LEARNINK_SANDBOX_1_POOL_SIZE` à 2.
 À savoir :
 - l'exécution de conteneurs est **en bêta** chez Vercel ;
 - une instance sans trafic pendant 5 minutes est arrêtée : la première requête suivante attend le démarrage de la JVM
-  (quelques secondes). Pendant un cours, le trafic continu garde l'instance active ;
+  (quelques secondes). Mesuré : un surcoût de 0,25 à 0,8 s sur une requête sur deux, d'où la préférence pour Clever Cloud ;
 - l'offre Hobby est réservée à un usage personnel et non commercial : vérifier qu'elle convient à un usage en établissement.
 
 ### En local avec Docker

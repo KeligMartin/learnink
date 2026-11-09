@@ -1,5 +1,8 @@
 # Profil de production (MySQL 8) : SPRING_PROFILES_ACTIVE=mysql
 #
+# Avec un add-on MySQL Clever Cloud lié à l'application, aucune variable de base n'est nécessaire :
+# MYSQL_ADDON_HOST, _PORT, _DB, _USER et _PASSWORD sont utilisées par défaut (voir learnink.addon).
+#
 # Base applicative (comptes, exercices, progression)
 #   LEARNINK_DB_URL             ex. jdbc:mysql://hote:3306/learnink?sslMode=VERIFY_IDENTITY
 #   LEARNINK_DB_USER / LEARNINK_DB_PASSWORD
@@ -23,9 +26,9 @@
 #   LEARNINK_TEACHER_EMAIL / LEARNINK_TEACHER_PASSWORD   premier compte enseignant
 spring:
   datasource:
-    url: ${LEARNINK_DB_URL:jdbc:mysql://localhost:3306/learnink}
-    username: ${LEARNINK_DB_USER:learnink}
-    password: ${LEARNINK_DB_PASSWORD:}
+    url: ${LEARNINK_DB_URL:${learnink.addon.url}}
+    username: ${LEARNINK_DB_USER:${learnink.addon.user}}
+    password: ${LEARNINK_DB_PASSWORD:${learnink.addon.password}}
     hikari:
       maximum-pool-size: ${LEARNINK_DB_POOL_SIZE:5}
       # Une connexion reste ouverte en permanence ; les autres sont libérées après 30 s d'inactivité
@@ -40,6 +43,13 @@ spring:
     enabled: true
 
 learnink:
+  # Add-on MySQL Clever Cloud lié à l'application : ses variables servent de valeurs par défaut à la base applicative
+  # et à la source de données 1 (une seule base pour tout : les tables applicatives restent protégées des requêtes
+  # étudiantes). Les variables LEARNINK_* ci-dessous restent prioritaires.
+  addon:
+    url: jdbc:mysql://${MYSQL_ADDON_HOST:localhost}:${MYSQL_ADDON_PORT:3306}/${MYSQL_ADDON_DB:learnink}
+    user: ${MYSQL_ADDON_USER:learnink}
+    password: ${MYSQL_ADDON_PASSWORD:}
   # Les exercices ne sont rechargés (et leurs solutions vérifiées) que si les fichiers seed/exercises-*.json ont changé
   seed:
     skip-unchanged-exercises: true
@@ -52,11 +62,11 @@ learnink:
     datasources:
       1:
         name: ${LEARNINK_SANDBOX_1_NAME:Résidence universitaire}
-        url: ${LEARNINK_SANDBOX_1_URL:jdbc:mysql://localhost:3306/learnink_sandbox_1}
-        username: ${LEARNINK_SANDBOX_1_USER:lecteur}
-        password: ${LEARNINK_SANDBOX_1_PASSWORD:}
-        admin-username: ${LEARNINK_SANDBOX_1_ADMIN_USER:${LEARNINK_DB_USER:learnink}}
-        admin-password: ${LEARNINK_SANDBOX_1_ADMIN_PASSWORD:${LEARNINK_DB_PASSWORD:}}
+        url: ${LEARNINK_SANDBOX_1_URL:${learnink.addon.url}}
+        username: ${LEARNINK_SANDBOX_1_USER:${learnink.addon.user}}
+        password: ${LEARNINK_SANDBOX_1_PASSWORD:${learnink.addon.password}}
+        admin-username: ${LEARNINK_SANDBOX_1_ADMIN_USER:${spring.datasource.username}}
+        admin-password: ${LEARNINK_SANDBOX_1_ADMIN_PASSWORD:${spring.datasource.password}}
         maximum-pool-size: ${LEARNINK_SANDBOX_1_POOL_SIZE:10}
         minimum-idle: ${LEARNINK_SANDBOX_1_MIN_IDLE:1}
         # Garantit que toute colonne du SELECT hors agrégat figure dans le GROUP BY (défaut MySQL 8, imposé au cas où)
@@ -70,8 +80,8 @@ learnink:
         url: ${LEARNINK_SANDBOX_2_URL:}
         username: ${LEARNINK_SANDBOX_2_USER:lecteur}
         password: ${LEARNINK_SANDBOX_2_PASSWORD:}
-        admin-username: ${LEARNINK_SANDBOX_2_ADMIN_USER:${LEARNINK_DB_USER:learnink}}
-        admin-password: ${LEARNINK_SANDBOX_2_ADMIN_PASSWORD:${LEARNINK_DB_PASSWORD:}}
+        admin-username: ${LEARNINK_SANDBOX_2_ADMIN_USER:${spring.datasource.username}}
+        admin-password: ${LEARNINK_SANDBOX_2_ADMIN_PASSWORD:${spring.datasource.password}}
         maximum-pool-size: ${LEARNINK_SANDBOX_2_POOL_SIZE:10}
         minimum-idle: ${LEARNINK_SANDBOX_2_MIN_IDLE:1}
         connection-init-sql: SET SESSION sql_mode = CONCAT(@@sql_mode, ',ONLY_FULL_GROUP_BY')
