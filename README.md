@@ -118,25 +118,26 @@ Pour afficher le résultat en graphique, ajouter à l'exercice :
 
 `type` : `BAR`, `HORIZONTAL_BAR`, `LINE`, `PIE` ou `DOUGHNUT`. Les `labelColumns` premières colonnes du résultat forment le libellé de chaque point (ex. `2` pour année + mois, ou prénom + nom) ; les colonnes numériques suivantes sont tracées.
 
-## Base bac à sable : la résidence universitaire
+## Bases bac à sable : les jeux de données
 
-Le modèle est décrit dans [docs/base-residence.md](docs/base-residence.md).
+| Source (`datasource`) | Jeu de données | Modèle | Scripts (`backend/src/main/resources/sandbox/`) | Exercices (`seed/`) |
+|---|---|---|---|---|
+| 1 | Résidence universitaire et son restaurant (25 tables, ~57 000 lignes) | [docs/base-residence.md](docs/base-residence.md) | `residence/` | `exercises-residence.json` |
+| 2 | Entreprise de transport de colis (35 tables, ~72 000 lignes) | [docs/base-transport.md](docs/base-transport.md) | `transport/` | `exercises-transport.json` |
 
-| Fichier (`backend/src/main/resources/sandbox/residence/`) | Rôle |
-|---|---|
-| `schema.sql` | DDL portable H2 / MySQL |
-| `data.sql` | Données générées (ne pas modifier à la main) |
-| `h2/lecteur.sql` | Utilisateur en lecture seule pour H2 (développement) |
+Chaque dossier contient `reset.sql`, `schema.sql` (DDL portable H2 / MySQL) et `data.sql` (données générées, ne pas
+modifier à la main) ; `h2/lecteur.sql` crée l'utilisateur en lecture seule en développement. Les deux parcours ont la même
+progression : une table (niveau 1), les jointures (niveau 2), `GROUP BY` / `HAVING` avec graphiques (niveau 3).
 
-Les données sont générées de façon déterministe par `backend/tools/generate_sandbox_data.py`, qui garantit leur cohérence
-(capacité des chambres, réservations uniquement par des résidents et dans la limite des places, incompatibilités déduites des ingrédients...).
-Après une modification du générateur :
+Les données sont générées de façon déterministe, avec une cohérence garantie par construction :
 
 ```bash
 python3 backend/tools/generate_sandbox_data.py > backend/src/main/resources/sandbox/residence/data.sql
 ```
 
-Options : `--etudiants` (420 candidats par défaut) et `--affluence` (multiplie le volume de réservations).
+```bash
+python3 backend/tools/generate_transport_data.py > backend/src/main/resources/sandbox/transport/data.sql
+```
 
 ## Déploiement
 
@@ -165,18 +166,18 @@ Chaque utilisateur a un champ `datasource` (1, 2...) : c'est **un jeu de donnée
 Un étudiant ne voit que les exercices de sa source, et ses requêtes s'exécutent sur la base correspondante.
 L'enseignant choisit la source de chaque étudiant (page Étudiants), ainsi que la sienne pour consulter un autre parcours.
 
-Ajouter un jeu de données (source 2) :
+Ajouter un jeu de données (source 3...) :
 1. placer ses scripts dans `backend/src/main/resources/sandbox/<jeu>/` (`reset.sql`, `schema.sql`, `data.sql`, en SQL portable MySQL / H2) ;
-2. les déclarer dans `learnink.sandbox.datasources.2.scripts` (profils `dev` et `mysql`) ;
-3. ajouter ses exercices avec `"datasource": 2` dans un fichier `seed/exercises-<jeu>.json` ;
-4. en production, définir `LEARNINK_SANDBOX_2_URL` (la source 2 est ignorée tant que cette variable est vide).
+2. les déclarer dans `learnink.sandbox.datasources.<n>` (profils `dev` et `mysql`) ;
+3. ajouter ses exercices avec `"datasource": <n>` dans un fichier `seed/exercises-<jeu>.json` ;
+4. en production, définir `LEARNINK_SANDBOX_<n>_URL` (une source est ignorée tant que son URL est vide).
 
 ### Base de données externe (MySQL 8)
 
 Exécuter une fois [deploy/base-externe.sql](deploy/base-externe.sql) (après avoir changé les mots de passe) avec un compte
 administrateur. Il crée :
 
-- `learnink` (application) et `learnink_sandbox_1`, `learnink_sandbox_2` (une base par source de données),
+- `learnink_user` (comptes, exercices, progression), `learnink_residence` (source 1) et `learnink_transport` (source 2),
   qui peuvent aussi être répartis sur plusieurs serveurs ;
 - un utilisateur applicatif avec tous les droits sur ces bases ;
 - un utilisateur `lecteur` avec **uniquement** `SELECT` sur les bases bac à sable : c'est lui qui exécute les requêtes des étudiants.
@@ -193,10 +194,12 @@ latence minimale vers la base.
 
 1. **Créer l'application** : *Create → an application → Docker*, depuis le dépôt GitHub (ou par `git push`, voir plus bas).
    Taille **XS** (1 Gio) : la nano (512 Mio) est juste pour la JVM. Région **Paris**, comme l'add-on.
-2. **Lier l'add-on MySQL** (*Service dependencies*). Ses variables `MYSQL_ADDON_HOST`, `_PORT`, `_DB`, `_USER`,
-   `_PASSWORD` sont injectées et utilisées par défaut pour la base applicative **et** la source de données 1
-   (une seule base : les tables de l'application restent inaccessibles aux requêtes des étudiants).
-3. **Variables d'environnement** de l'application :
+2. **Trois add-ons MySQL**, un par base : `learnink_user` (comptes, exercices, progression), `learnink_residence`
+   (source 1) et `learnink_transport` (source 2). Un add-on ne fournit qu'une base et un utilisateur propriétaire ;
+   dans la console de chaque add-on de source, créer un **utilisateur en lecture seule**.
+   **Lier uniquement `learnink_user`** à l'application (*Service dependencies*) : ses variables `MYSQL_ADDON_*` servent
+   à la base applicative. Les deux autres se renseignent à la main, d'après leur onglet *Information*.
+3. **Variables d'environnement** de l'application (*Environment variables*, puis **Update changes** et redémarrage) :
 
 | Variable | Valeur |
 |---|---|
@@ -204,8 +207,17 @@ latence minimale vers la base.
 | `CC_HEALTH_CHECK_PATH` | `/actuator/health` |
 | `LEARNINK_JWT_SECRET` | chaîne aléatoire d'au moins 32 caractères |
 | `LEARNINK_TEACHER_EMAIL`, `LEARNINK_TEACHER_PASSWORD` | premier compte enseignant (mot de passe à changer à la 1re connexion) |
-| `LEARNINK_SANDBOX_1_USER`, `LEARNINK_SANDBOX_1_PASSWORD` | recommandé : un utilisateur **en lecture seule** créé dans la console de l'add-on |
-| `LEARNINK_DB_POOL_SIZE`, `LEARNINK_SANDBOX_1_POOL_SIZE` | `2` et `2` avec l'offre MySQL DEV (5 connexions) ; à retirer avec une offre dédiée |
+| `LEARNINK_SANDBOX_1_URL` | `jdbc:mysql://<hôte>:<port>/<base>` de **learnink_residence** |
+| `LEARNINK_SANDBOX_1_ADMIN_USER`, `LEARNINK_SANDBOX_1_ADMIN_PASSWORD` | propriétaire de learnink_residence (chargement des données) |
+| `LEARNINK_SANDBOX_1_USER`, `LEARNINK_SANDBOX_1_PASSWORD` | utilisateur en lecture seule de learnink_residence |
+| `LEARNINK_SANDBOX_2_URL` | `jdbc:mysql://<hôte>:<port>/<base>` de **learnink_transport** |
+| `LEARNINK_SANDBOX_2_ADMIN_USER`, `LEARNINK_SANDBOX_2_ADMIN_PASSWORD` | propriétaire de learnink_transport |
+| `LEARNINK_SANDBOX_2_USER`, `LEARNINK_SANDBOX_2_PASSWORD` | utilisateur en lecture seule de learnink_transport |
+| `LEARNINK_DB_POOL_SIZE`, `LEARNINK_SANDBOX_1_POOL_SIZE`, `LEARNINK_SANDBOX_2_POOL_SIZE` | `4`, `3`, `3` avec des add-ons DEV (5 connexions chacun) ; à retirer avec des offres dédiées |
+
+Chaque base est chargée au démarrage si elle est vide ou si son jeu de données a changé (y compris quand une source
+change de base). Mélanger l'hôte, la base et l'utilisateur de deux add-ons provoque
+`Access denied for user ... to database ...` : chaque ligne du tableau reprend les informations d'**un seul** add-on.
 
 4. **Déployer** : chaque push sur la branche suivie (ou `git push clever HEAD:master` vers le dépôt git de l'application,
    indiqué dans *Information*). Le build Docker (npm, Maven et tests) peut demander plus de mémoire : en cas d'échec
@@ -213,13 +225,6 @@ latence minimale vers la base.
 
 Les déploiements sont sans interruption : la nouvelle instance doit répondre sur `/actuator/health` avant que l'ancienne
 ne s'arrête.
-
-**Bases sur des add-ons séparés.** Un add-on MySQL Clever Cloud ne fournit qu'une base et un utilisateur propriétaire.
-Pour séparer la base applicative et une source de données, créer un add-on par base, en lier un à l'application
-(base applicative) et reporter les informations de l'autre (onglet *Information*) :
-`LEARNINK_SANDBOX_1_URL` = `jdbc:mysql://<hôte>:<port>/<base>`, `LEARNINK_SANDBOX_1_ADMIN_USER` / `_ADMIN_PASSWORD`
-= son propriétaire, `LEARNINK_SANDBOX_1_USER` / `_PASSWORD` = son utilisateur en lecture seule. Mélanger l'hôte, la base
-et l'utilisateur de deux add-ons provoque `Access denied for user ... to database ...`.
 
 ### Sur Vercel (alternative)
 
@@ -230,9 +235,9 @@ et l'utilisateur de deux add-ons provoque `Access denied for user ... to databas
 |---|---|
 | `PORT` | `8080` (Vercel écoute le port 80 par défaut) |
 | `SPRING_PROFILES_ACTIVE` | `mysql` |
-| `LEARNINK_DB_URL` | `jdbc:mysql://<hôte>:<port>/learnink?sslMode=VERIFY_IDENTITY` |
+| `LEARNINK_DB_URL` | `jdbc:mysql://<hôte>:<port>/learnink_user?sslMode=VERIFY_IDENTITY` |
 | `LEARNINK_DB_USER`, `LEARNINK_DB_PASSWORD` | utilisateur applicatif |
-| `LEARNINK_SANDBOX_1_URL` | `jdbc:mysql://<hôte>:<port>/learnink_sandbox_1?sslMode=VERIFY_IDENTITY` |
+| `LEARNINK_SANDBOX_1_URL` | `jdbc:mysql://<hôte>:<port>/learnink_residence?sslMode=VERIFY_IDENTITY` |
 | `LEARNINK_SANDBOX_1_USER`, `LEARNINK_SANDBOX_1_PASSWORD` | `lecteur` et son mot de passe |
 | `LEARNINK_SANDBOX_2_URL`, `LEARNINK_SANDBOX_2_NAME`, `..._USER`, `..._PASSWORD` | source 2, quand elle existe |
 | `LEARNINK_JWT_SECRET` | chaîne aléatoire d'au moins 32 caractères |

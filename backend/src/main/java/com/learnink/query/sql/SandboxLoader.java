@@ -60,7 +60,8 @@ public class SandboxLoader implements ApplicationRunner {
             if (scripts.isEmpty()) {
                 continue;
             }
-            String checksum = checksum(scripts);
+            // L'adresse de la base fait partie de l'empreinte : une source déplacée vers une nouvelle base est rechargée
+            String checksum = checksum(withoutParameters(entry.getValue().loadUrl()), scripts);
             if (mode == SandboxInitMode.IF_CHANGED && Optional.of(checksum).equals(storedChecksum(number))) {
                 log.info("Base bac à sable n°{} à jour, aucun rechargement", number);
                 continue;
@@ -108,9 +109,10 @@ public class SandboxLoader implements ApplicationRunner {
         }
     }
 
-    private static String checksum(List<Resource> scripts) throws IOException {
+    private static String checksum(String databaseUrl, List<Resource> scripts) throws IOException {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            digest.update(databaseUrl.getBytes(StandardCharsets.UTF_8));
             for (Resource script : scripts) {
                 try (InputStream input = script.getInputStream()) {
                     digest.update(input.readAllBytes());

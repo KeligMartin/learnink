@@ -1,0 +1,324 @@
+[
+  {
+    "code": "tra-1-01",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 1,
+    "position": 1,
+    "title": "Le réseau d'agences",
+    "statement": "Affichez le nom et la ville de toutes les agences, triées par ville puis par nom.\n\nTable utile : `agence`.",
+    "referenceQuery": "SELECT nom, ville FROM agence ORDER BY ville, nom",
+    "orderMatters": true
+  },
+  {
+    "code": "tra-1-02",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 1,
+    "position": 2,
+    "title": "Les gros porteurs",
+    "statement": "Affichez l'immatriculation et la capacité de chargement des véhicules pouvant transporter au moins 1 000 kg, de la plus grande capacité à la plus petite. En cas d'égalité, triez par immatriculation.\n\nTable utile : `vehicule`.",
+    "referenceQuery": "SELECT immatriculation, capacite_kg FROM vehicule WHERE capacite_kg >= 1000 ORDER BY capacite_kg DESC, immatriculation",
+    "orderMatters": true
+  },
+  {
+    "code": "tra-1-03",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 1,
+    "position": 3,
+    "title": "Colis fragiles et lourds",
+    "statement": "Affichez l'identifiant et le poids des colis fragiles pesant plus de 10 kg.\n\nTable utile : `colis`.",
+    "referenceQuery": "SELECT id, poids_kg FROM colis WHERE fragile = TRUE AND poids_kg > 10",
+    "orderMatters": false
+  },
+  {
+    "code": "tra-1-04",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 1,
+    "position": 4,
+    "title": "Coût de trajet inconnu",
+    "statement": "Le coût de certains trajets n'est pas renseigné. Affichez l'identifiant, le libellé et la distance de ces trajets.\n\nIndice : une valeur absente ne se compare pas avec `=`.",
+    "referenceQuery": "SELECT id, libelle, distance_km FROM trajet WHERE cout IS NULL",
+    "orderMatters": false
+  },
+  {
+    "code": "tra-1-05",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 1,
+    "position": 5,
+    "title": "Les urgences d'octobre",
+    "statement": "Affichez la référence et la date de création des expéditions de priorité « Urgente » créées en octobre 2026, dans l'ordre chronologique.\n\nAstuce de performance : comparez la date à un intervalle plutôt que d'appliquer une fonction à la colonne.",
+    "referenceQuery": "SELECT reference, date_creation FROM expedition WHERE priorite = 'Urgente' AND date_creation >= DATE '2026-10-01' AND date_creation < DATE '2026-11-01' ORDER BY date_creation",
+    "orderMatters": true
+  },
+  {
+    "code": "tra-1-06",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 1,
+    "position": 6,
+    "title": "Les clients professionnels",
+    "statement": "Affichez le nom (raison sociale) et l'email des clients professionnels, triés par nom.\n\nTable utile : `client`.",
+    "referenceQuery": "SELECT nom, email FROM client WHERE type_client = 'Professionnel' ORDER BY nom",
+    "orderMatters": true
+  },
+  {
+    "code": "tra-1-07",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 1,
+    "position": 7,
+    "title": "Avenue Jean Jaurès",
+    "statement": "Affichez la rue, le code postal et la ville de toutes les adresses situées avenue Jean Jaurès.\n\nIndice : l'opérateur `LIKE` et le joker `%`.",
+    "referenceQuery": "SELECT rue, code_postal, ville FROM adresse WHERE rue LIKE '%Jean Jaurès%'",
+    "orderMatters": false
+  },
+  {
+    "code": "tra-1-08",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 1,
+    "position": 8,
+    "title": "Combien de livraisons manquées ?",
+    "statement": "Comptez le nombre de tentatives de livraison qui n'ont pas abouti (résultat différent de « Livré »).\n\nIndice : la fonction `COUNT(*)`.",
+    "referenceQuery": "SELECT COUNT(*) AS nb_echecs FROM tentative_livraison WHERE resultat <> 'Livré'",
+    "orderMatters": false
+  },
+  {
+    "code": "tra-1-09",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 1,
+    "position": 9,
+    "title": "Poids moyen d'un colis",
+    "statement": "Calculez le poids moyen d'un colis, arrondi à 2 décimales.\n\nIndice : les fonctions `AVG()` et `ROUND(valeur, 2)`.",
+    "referenceQuery": "SELECT ROUND(AVG(poids_kg), 2) AS poids_moyen FROM colis",
+    "orderMatters": false
+  },
+  {
+    "code": "tra-2-01",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 2,
+    "position": 1,
+    "title": "Le contenu d'une expédition",
+    "statement": "Affichez le numéro, le poids et l'indication de fragilité de chaque colis de l'expédition de référence « EXP-2026-00042 ».\n\nTables utiles : `expedition`, `colis`.",
+    "referenceQuery": "SELECT c.numero, c.poids_kg, c.fragile FROM colis c JOIN expedition e ON e.id = c.expedition_id WHERE e.reference = 'EXP-2026-00042'",
+    "orderMatters": false
+  },
+  {
+    "code": "tra-2-02",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 2,
+    "position": 2,
+    "title": "Expéditeurs et destinataires",
+    "statement": "Pour chaque expédition urgente créée en octobre 2026, affichez sa référence, le nom de l'expéditeur et le nom du destinataire.\n\nIndice : joignez deux fois la table `client`, avec deux alias différents.",
+    "referenceQuery": "SELECT x.reference, e.nom AS expediteur, d.nom AS destinataire FROM expedition x JOIN client e ON e.id = x.expediteur_id JOIN client d ON d.id = x.destinataire_id WHERE x.priorite = 'Urgente' AND x.date_creation >= DATE '2026-10-01' AND x.date_creation < DATE '2026-11-01'",
+    "orderMatters": false
+  },
+  {
+    "code": "tra-2-03",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 2,
+    "position": 3,
+    "title": "Les trajets au départ de Lyon",
+    "statement": "Affichez, pour chaque trajet partant de l'agence de Lyon, le nom de l'agence d'arrivée, le libellé du trajet, sa distance et sa durée estimée.\n\nIndice : un trajet relie deux agences, il faut donc joindre deux fois la table `agence`.",
+    "referenceQuery": "SELECT arr.nom, t.libelle, t.distance_km, t.duree_estimee_min FROM trajet t JOIN agence dep ON dep.id = t.agence_depart_id JOIN agence arr ON arr.id = t.agence_arrivee_id WHERE dep.ville = 'Lyon'",
+    "orderMatters": false
+  },
+  {
+    "code": "tra-2-04",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 2,
+    "position": 4,
+    "title": "L'itinéraire d'une tournée",
+    "statement": "Affichez, dans l'ordre de passage, le numéro d'ordre, la rue et la ville de chaque arrêt de la tournée n°141.\n\nTables utiles : `arret`, `adresse`.",
+    "referenceQuery": "SELECT ar.ordre, ad.rue, ad.ville FROM arret ar JOIN adresse ad ON ad.id = ar.adresse_id WHERE ar.tournee_id = 141 ORDER BY ar.ordre",
+    "orderMatters": true
+  },
+  {
+    "code": "tra-2-05",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 2,
+    "position": 5,
+    "title": "Spécialistes des produits fragiles",
+    "statement": "Affichez le prénom et le nom des livreurs ayant la spécialisation « Produits fragiles ».\n\nTables utiles : `employe`, `livreur_specialisation`, `specialisation`.",
+    "referenceQuery": "SELECT e.prenom, e.nom FROM employe e JOIN livreur_specialisation ls ON ls.employe_id = e.id JOIN specialisation s ON s.id = ls.specialisation_id WHERE s.libelle = 'Produits fragiles'",
+    "orderMatters": false
+  },
+  {
+    "code": "tra-2-06",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 2,
+    "position": 6,
+    "title": "Le parcours d'un colis",
+    "statement": "Reconstituez le parcours du colis n°1 de l'expédition « EXP-2026-00042 » : date et heure, libellé du statut et nom de l'agence de chaque événement, dans l'ordre chronologique.\n\nAttention : la remise au destinataire n'a lieu dans aucune agence, cet événement doit pourtant apparaître (pensez au `LEFT JOIN`).",
+    "referenceQuery": "SELECT ev.date_heure, s.libelle, a.nom FROM evenement_suivi ev JOIN statut_suivi s ON s.id = ev.statut_id JOIN colis c ON c.id = ev.colis_id JOIN expedition x ON x.id = c.expedition_id LEFT JOIN agence a ON a.id = ev.agence_id WHERE x.reference = 'EXP-2026-00042' AND c.numero = 1 ORDER BY ev.date_heure",
+    "orderMatters": true
+  },
+  {
+    "code": "tra-2-07",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 2,
+    "position": 7,
+    "title": "Véhicules jamais immobilisés",
+    "statement": "Affichez l'immatriculation des véhicules qui n'ont jamais été indisponibles (ni panne, ni maintenance).\n\nIndice : un `LEFT JOIN` conserve les véhicules sans indisponibilité ; les colonnes de l'indisponibilité y valent alors `NULL`.",
+    "referenceQuery": "SELECT v.immatriculation FROM vehicule v LEFT JOIN indisponibilite_vehicule i ON i.vehicule_id = v.id WHERE i.id IS NULL",
+    "orderMatters": false
+  },
+  {
+    "code": "tra-2-08",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 2,
+    "position": 8,
+    "title": "Qui a formé qui ?",
+    "statement": "La table `formation` relie deux employés : le formateur (`formateur_id`) et le livreur formé (`forme_id`).\n\nAffichez, pour chaque formation, le prénom et le nom du formateur, le prénom et le nom du livreur formé, et le résultat de la formation.\n\nIndice : joignez deux fois la table `employe`.",
+    "referenceQuery": "SELECT formateur.prenom, formateur.nom, forme.prenom, forme.nom, f.resultat FROM formation f JOIN employe formateur ON formateur.id = f.formateur_id JOIN employe forme ON forme.id = f.forme_id",
+    "orderMatters": false
+  },
+  {
+    "code": "tra-3-01",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 3,
+    "position": 1,
+    "title": "La flotte par type de véhicule",
+    "statement": "Affichez le libellé de chaque type de véhicule et le nombre de véhicules de ce type, du plus nombreux au moins nombreux. En cas d'égalité, triez par libellé.",
+    "referenceQuery": "SELECT tv.libelle, COUNT(*) AS nb_vehicules FROM type_vehicule tv JOIN vehicule v ON v.type_vehicule_id = tv.id GROUP BY tv.id, tv.libelle ORDER BY nb_vehicules DESC, tv.libelle",
+    "orderMatters": true,
+    "chart": {
+      "type": "BAR",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "tra-3-02",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 3,
+    "position": 2,
+    "title": "Expéditions par service",
+    "statement": "Affichez le nom de chaque service et le nombre d'expéditions qui l'ont choisi, du plus demandé au moins demandé. En cas d'égalité, triez par nom.",
+    "referenceQuery": "SELECT s.nom, COUNT(*) AS nb_expeditions FROM service s JOIN expedition x ON x.service_id = s.id GROUP BY s.id, s.nom ORDER BY nb_expeditions DESC, s.nom",
+    "orderMatters": true,
+    "chart": {
+      "type": "DOUGHNUT",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "tra-3-03",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 3,
+    "position": 3,
+    "title": "L'activité mois par mois",
+    "statement": "Affichez l'année, le mois et le nombre d'expéditions créées, dans l'ordre chronologique.\n\nIndice : on peut regrouper sur plusieurs expressions, par exemple `GROUP BY YEAR(...), MONTH(...)`.",
+    "referenceQuery": "SELECT YEAR(date_creation) AS annee, MONTH(date_creation) AS mois, COUNT(*) AS nb_expeditions FROM expedition GROUP BY YEAR(date_creation), MONTH(date_creation) ORDER BY annee, mois",
+    "orderMatters": true,
+    "chart": {
+      "type": "LINE",
+      "labelColumns": 2
+    }
+  },
+  {
+    "code": "tra-3-04",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 3,
+    "position": 4,
+    "title": "Poids moyen par service",
+    "statement": "Affichez le nom de chaque service et le poids moyen de ses colis, arrondi à 2 décimales, du plus lourd au plus léger. En cas d'égalité, triez par nom.\n\nTables utiles : `service`, `expedition`, `colis`.",
+    "referenceQuery": "SELECT s.nom, ROUND(AVG(c.poids_kg), 2) AS poids_moyen FROM service s JOIN expedition x ON x.service_id = s.id JOIN colis c ON c.expedition_id = x.id GROUP BY s.id, s.nom ORDER BY poids_moyen DESC, s.nom",
+    "orderMatters": true,
+    "chart": {
+      "type": "BAR",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "tra-3-05",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 3,
+    "position": 5,
+    "title": "Résultat des tentatives",
+    "statement": "Affichez chaque résultat de tentative de livraison et le nombre de tentatives correspondantes, du plus fréquent au moins fréquent. En cas d'égalité, triez par résultat.",
+    "referenceQuery": "SELECT resultat, COUNT(*) AS nb_tentatives FROM tentative_livraison GROUP BY resultat ORDER BY nb_tentatives DESC, resultat",
+    "orderMatters": true,
+    "chart": {
+      "type": "HORIZONTAL_BAR",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "tra-3-06",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 3,
+    "position": 6,
+    "title": "Les livreurs de chaque agence",
+    "statement": "Affichez le nom de chaque agence et le nombre de livreurs qui y sont actuellement affectés (affectation sans date de fin), triés par nom d'agence.\n\nTables utiles : `agence`, `affectation_agence`, `employe`.",
+    "referenceQuery": "SELECT a.nom, COUNT(*) AS nb_livreurs FROM agence a JOIN affectation_agence af ON af.agence_id = a.id JOIN employe e ON e.id = af.employe_id WHERE af.date_fin IS NULL AND e.fonction = 'Livreur' GROUP BY a.id, a.nom ORDER BY a.nom",
+    "orderMatters": true,
+    "chart": {
+      "type": "BAR",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "tra-3-07",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 3,
+    "position": 7,
+    "title": "Les clients fidèles",
+    "statement": "Affichez le nom et le nombre d'expéditions envoyées des clients ayant envoyé au moins 47 expéditions, du plus grand nombre au plus petit.\n\nIndice : `WHERE` filtre les lignes avant le regroupement, `HAVING` filtre les groupes après.",
+    "referenceQuery": "SELECT c.nom, COUNT(*) AS nb_expeditions FROM client c JOIN expedition x ON x.expediteur_id = c.id GROUP BY c.id, c.nom HAVING COUNT(*) >= 47 ORDER BY nb_expeditions DESC",
+    "orderMatters": false,
+    "chart": {
+      "type": "HORIZONTAL_BAR",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "tra-3-08",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 3,
+    "position": 8,
+    "title": "Les livraisons manquées par livreur",
+    "statement": "Affichez le prénom, le nom et le nombre de tentatives non abouties (résultat différent de « Livré ») des livreurs en comptant au moins 14, du plus grand nombre au plus petit.",
+    "referenceQuery": "SELECT e.prenom, e.nom, COUNT(*) AS nb_echecs FROM employe e JOIN tentative_livraison t ON t.livreur_id = e.id WHERE t.resultat <> 'Livré' GROUP BY e.id, e.prenom, e.nom HAVING COUNT(*) >= 14 ORDER BY nb_echecs DESC",
+    "orderMatters": false,
+    "chart": {
+      "type": "BAR",
+      "labelColumns": 2
+    }
+  },
+  {
+    "code": "tra-3-09",
+    "engine": "SQL",
+    "datasource": 2,
+    "level": 3,
+    "position": 9,
+    "title": "Les agences aux départs en retard",
+    "statement": "Une opération de transport est en retard lorsque son arrivée réelle est postérieure à son arrivée prévue.\n\nAffichez le nom de chaque agence de départ et le nombre d'opérations arrivées en retard, pour les agences en comptant au moins 110, de la plus touchée à la moins touchée. En cas d'égalité, triez par nom.\n\nTables utiles : `operation_transport`, `trajet`, `agence`.",
+    "referenceQuery": "SELECT a.nom, COUNT(*) AS nb_retards FROM operation_transport o JOIN trajet t ON t.id = o.trajet_id JOIN agence a ON a.id = t.agence_depart_id WHERE o.arrivee_reelle > o.arrivee_prevue GROUP BY a.id, a.nom HAVING COUNT(*) >= 110 ORDER BY nb_retards DESC, a.nom",
+    "orderMatters": true,
+    "chart": {
+      "type": "BAR",
+      "labelColumns": 1
+    }
+  }
+]

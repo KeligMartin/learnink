@@ -4,12 +4,12 @@
 # MYSQL_ADDON_HOST, _PORT, _DB, _USER et _PASSWORD sont utilisées par défaut (voir learnink.addon).
 #
 # Base applicative (comptes, exercices, progression)
-#   LEARNINK_DB_URL             ex. jdbc:mysql://hote:3306/learnink?sslMode=VERIFY_IDENTITY
+#   LEARNINK_DB_URL             ex. jdbc:mysql://hote:3306/learnink_user?sslMode=VERIFY_IDENTITY
 #   LEARNINK_DB_USER / LEARNINK_DB_PASSWORD
 #   LEARNINK_DB_POOL_SIZE       connexions par instance (défaut 5)
 #
 # Sources de données (une base bac à sable par jeu de données ; n = 1 ou 2)
-#   LEARNINK_SANDBOX_n_URL      ex. jdbc:mysql://hote:3306/learnink_sandbox_1?sslMode=VERIFY_IDENTITY
+#   LEARNINK_SANDBOX_n_URL      ex. jdbc:mysql://hote:3306/learnink_residence?sslMode=VERIFY_IDENTITY
 #                               (source 2 ignorée si LEARNINK_SANDBOX_2_URL est vide)
 #   LEARNINK_SANDBOX_n_NAME     libellé affiché à l'enseignant
 #   LEARNINK_SANDBOX_n_USER / LEARNINK_SANDBOX_n_PASSWORD
@@ -76,7 +76,7 @@ learnink:
           - classpath:sandbox/residence/schema.sql
           - classpath:sandbox/residence/data.sql
       2:
-        name: ${LEARNINK_SANDBOX_2_NAME:Source 2}
+        name: ${LEARNINK_SANDBOX_2_NAME:Transport de colis}
         url: ${LEARNINK_SANDBOX_2_URL:}
         username: ${LEARNINK_SANDBOX_2_USER:lecteur}
         password: ${LEARNINK_SANDBOX_2_PASSWORD:}
@@ -85,5 +85,7 @@ learnink:
         maximum-pool-size: ${LEARNINK_SANDBOX_2_POOL_SIZE:10}
         minimum-idle: ${LEARNINK_SANDBOX_2_MIN_IDLE:1}
         connection-init-sql: SET SESSION sql_mode = CONCAT(@@sql_mode, ',ONLY_FULL_GROUP_BY')
-        # À compléter avec les scripts du second jeu de données (reset, schema, data)
-        scripts: []
+        scripts:
+          - classpath:sandbox/transport/reset.sql
+          - classpath:sandbox/transport/schema.sql
+          - classpath:sandbox/transport/data.sql
