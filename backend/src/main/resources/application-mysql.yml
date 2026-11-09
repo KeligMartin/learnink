@@ -28,8 +28,9 @@ spring:
     password: ${LEARNINK_DB_PASSWORD:}
     hikari:
       maximum-pool-size: ${LEARNINK_DB_POOL_SIZE:5}
-      # Aucune connexion gardée ouverte sans activité : libère le quota de connexions de l'hébergeur
-      minimum-idle: 0
+      # Une connexion reste ouverte en permanence ; les autres sont libérées après 30 s d'inactivité
+      # (quota de connexions de l'hébergeur). LEARNINK_DB_MIN_IDLE=0 pour n'en garder aucune.
+      minimum-idle: ${LEARNINK_DB_MIN_IDLE:1}
       idle-timeout: 30000
   jpa:
     hibernate:
@@ -39,6 +40,9 @@ spring:
     enabled: true
 
 learnink:
+  # Les exercices ne sont rechargés (et leurs solutions vérifiées) que si les fichiers seed/exercises-*.json ont changé
+  seed:
+    skip-unchanged-exercises: true
   security:
     # Le frontend est servi par l'application elle-même : aucune autre origine n'est autorisée
     allowed-origins: ""
@@ -54,6 +58,7 @@ learnink:
         admin-username: ${LEARNINK_SANDBOX_1_ADMIN_USER:${LEARNINK_DB_USER:learnink}}
         admin-password: ${LEARNINK_SANDBOX_1_ADMIN_PASSWORD:${LEARNINK_DB_PASSWORD:}}
         maximum-pool-size: ${LEARNINK_SANDBOX_1_POOL_SIZE:10}
+        minimum-idle: ${LEARNINK_SANDBOX_1_MIN_IDLE:1}
         # Garantit que toute colonne du SELECT hors agrégat figure dans le GROUP BY (défaut MySQL 8, imposé au cas où)
         connection-init-sql: SET SESSION sql_mode = CONCAT(@@sql_mode, ',ONLY_FULL_GROUP_BY')
         scripts:
@@ -68,6 +73,7 @@ learnink:
         admin-username: ${LEARNINK_SANDBOX_2_ADMIN_USER:${LEARNINK_DB_USER:learnink}}
         admin-password: ${LEARNINK_SANDBOX_2_ADMIN_PASSWORD:${LEARNINK_DB_PASSWORD:}}
         maximum-pool-size: ${LEARNINK_SANDBOX_2_POOL_SIZE:10}
+        minimum-idle: ${LEARNINK_SANDBOX_2_MIN_IDLE:1}
         connection-init-sql: SET SESSION sql_mode = CONCAT(@@sql_mode, ',ONLY_FULL_GROUP_BY')
         # À compléter avec les scripts du second jeu de données (reset, schema, data)
         scripts: []

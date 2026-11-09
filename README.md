@@ -186,6 +186,21 @@ Les fonctions Vercel n'ayant pas d'IP fixe, MySQL doit accepter les connexions d
 base applicative et 10 par source de données (`LEARNINK_DB_POOL_SIZE`, `LEARNINK_SANDBOX_n_POOL_SIZE`) : vérifier la
 limite de connexions de l'offre choisie.
 
+### Avec Clever Cloud
+
+Un add-on MySQL Clever Cloud ne fournit **qu'une base et un utilisateur propriétaire** (pas de `CREATE DATABASE` ni de
+`CREATE USER` ; des utilisateurs en lecture seule se créent dans la console). Prévoir **un add-on par base** et reporter
+les informations de chaque add-on (onglet *Information* : hôte, port, base, utilisateur, mot de passe) :
+
+| Add-on | Variables Learnink |
+|---|---|
+| Base applicative | `LEARNINK_DB_URL` = `jdbc:mysql://<hôte>:<port>/<base>`, `LEARNINK_DB_USER`, `LEARNINK_DB_PASSWORD` (propriétaire) |
+| Source de données 1 | `LEARNINK_SANDBOX_1_URL` = `jdbc:mysql://<hôte>:<port>/<base>` ; `LEARNINK_SANDBOX_1_ADMIN_USER` / `_ADMIN_PASSWORD` = propriétaire ; `LEARNINK_SANDBOX_1_USER` / `_PASSWORD` = utilisateur en lecture seule créé dans la console |
+
+Chaque utilisateur n'a accès qu'à la base de son add-on : mélanger l'hôte, la base et l'utilisateur de deux add-ons
+provoque `Access denied for user ... to database ...`. L'offre DEV est limitée à 5 connexions par utilisateur :
+réduire alors `LEARNINK_DB_POOL_SIZE` et `LEARNINK_SANDBOX_1_POOL_SIZE` à 2.
+
 ### Sur Vercel
 
 1. Importer le dépôt dans Vercel (ou `vercel deploy`) : `Dockerfile.vercel` est détecté et l'image construite par Vercel.

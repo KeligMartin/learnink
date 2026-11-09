@@ -27,8 +27,10 @@ public record SandboxProperties(int queryTimeoutSeconds, int maxComparedRows, in
      * @param adminUsername / adminPassword utilisateur disposant des droits d'écriture, pour le chargement des données
      * @param scripts                      scripts de chargement (schéma + données) propres à ce jeu de données
      * @param connectionInitSql            requête exécutée à l'ouverture de chaque connexion (ex. mode SQL)
+     * @param minimumIdle                  connexions gardées ouvertes sans activité (défaut 1)
      */
     public record Datasource(String name, String url, String username, String password, int maximumPoolSize,
+                             Integer minimumIdle,
                              String connectionInitSql, String adminUrl, String adminUsername, String adminPassword,
                              List<String> scripts) {
 

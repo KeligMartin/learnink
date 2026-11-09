@@ -24,8 +24,10 @@ public class SandboxDataSource implements AutoCloseable {
         pool.setPassword(properties.password());
         pool.setMaximumPoolSize(properties.maximumPoolSize());
         pool.setReadOnly(true);
-        // Aucune connexion gardée ouverte sans activité : libère le quota de connexions de l'hébergeur
-        pool.setMinimumIdle(0);
+        // Une connexion reste ouverte (évite une nouvelle connexion chiffrée à chaque requête), les autres sont
+        // libérées après 30 s d'inactivité pour respecter le quota de connexions de l'hébergeur
+        pool.setMinimumIdle(Math.min(properties.minimumIdle() == null ? 1 : properties.minimumIdle(),
+                properties.maximumPoolSize()));
         pool.setIdleTimeout(IDLE_TIMEOUT_MS);
         if (properties.connectionInitSql() != null && !properties.connectionInitSql().isBlank()) {
             pool.setConnectionInitSql(properties.connectionInitSql());

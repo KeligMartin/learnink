@@ -13,10 +13,12 @@ import com.learnink.query.QueryExecutionStrategyRegistry;
 import com.learnink.query.QueryTarget;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import com.learnink.startup.StartupOrder;
+import com.learnink.startup.StartupState;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -52,12 +54,20 @@ public class ExerciseSeeder implements ApplicationRunner {
         }
     }
 
+    private static final String TASK = "exercises";
+
     private final ExerciseRepository exerciseRepository;
+    private final StartupState startupState;
+    private final boolean skipUnchanged;
     private final QueryExecutionStrategyRegistry strategies;
     private final ObjectMapper objectMapper;
 
     public ExerciseSeeder(ExerciseRepository exerciseRepository, QueryExecutionStrategyRegistry strategies,
-                          ObjectMapper objectMapper) {
+                          ObjectMapper objectMapper,
+                          StartupState startupState,
+                          @Value("${learnink.seed.skip-unchanged-exercises:false}") boolean skipUnchanged) {
+        this.startupState = startupState;
+        this.skipUnchanged = skipUnchanged;
         this.exerciseRepository = exerciseRepository;
         this.strategies = strategies;
         this.objectMapper = objectMapper;
@@ -67,6 +77,11 @@ public class ExerciseSeeder implements ApplicationRunner {
     @Transactional
     public void run(ApplicationArguments args) throws IOException {
         Resource[] resources = new PathMatchingResourcePatternResolver().getResources("classpath:seed/exercises-*.json");
+        String checksum = StartupState.checksum(resources);
+        if (skipUnchanged && startupState.isUpToDate(TASK, checksum)) {
+            log.info("Exercices à jour, aucun rechargement");
+            return;
+        }
         Set<String> codes = new HashSet<>();
         for (Resource resource : resources) {
             try (InputStream input = resource.getInputStream()) {
@@ -78,6 +93,9 @@ public class ExerciseSeeder implements ApplicationRunner {
             }
         }
         archiveRemovedExercises(codes);
+        if (skipUnchanged) {
+            startupState.markDone(TASK, checksum);
+        }
     }
 
     /** Les exercices retirés des fichiers sont archivés (et non supprimés) pour conserver les tentatives. */
