@@ -45,6 +45,10 @@ learnink:
   seed:
     exercises: true
     demo-users: false
+  students:
+    # Mot de passe par défaut d'un étudiant (création et réinitialisation) : partie de l'adresse avant « @ » + suffixe,
+    # ex. plancelet@ecole.fr → plancelet2026. À changer à la première connexion.
+    default-password-suffix: ${LEARNINK_STUDENT_PASSWORD_SUFFIX:2026}
   # Premier compte enseignant, créé au démarrage s'il n'existe pas (mot de passe à changer à la première connexion)
   bootstrap:
     teacher-email: ${LEARNINK_TEACHER_EMAIL:}

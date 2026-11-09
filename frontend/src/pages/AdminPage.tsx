@@ -67,7 +67,7 @@ export function AdminPage() {
   }
 
   async function reset(student: Student) {
-    if (!window.confirm(`Générer un nouveau mot de passe temporaire pour ${student.email} ?`)) return;
+    if (!window.confirm(`Remettre le mot de passe par défaut de ${student.email} ?`)) return;
     setError(null);
     try {
       setCredentials(await api.resetStudentPassword(student.id));
@@ -87,7 +87,7 @@ export function AdminPage() {
             progression.
           </p>
         </div>
-        {user && datasources.length > 1 && (
+        {user && datasources.length > 0 && (
           <label className="inline-label">
             Mon jeu de données (parcours affiché)
             <DatasourceSelect
@@ -96,6 +96,11 @@ export function AdminPage() {
               onChange={changeOwnDatasource}
               label="Mon jeu de données"
             />
+            {datasources.length === 1 && (
+              <span className="muted">
+                Un seul jeu de données est configuré sur le serveur (variables LEARNINK_SANDBOX_2_*).
+              </span>
+            )}
           </label>
         )}
       </div>
@@ -123,11 +128,11 @@ export function AdminPage() {
       {credentials && (
         <div className="card credentials" role="status">
           <p>
-            Mot de passe temporaire de <strong>{credentials.student.email}</strong> :{' '}
+            Mot de passe par défaut de <strong>{credentials.student.email}</strong> :{' '}
             <code className="password">{credentials.temporaryPassword}</code>
           </p>
           <p className="muted">
-            Transmettez-le à l'étudiant : il ne sera plus affiché. Il devra le changer à sa première connexion.
+            Partie de l'adresse avant « @ » suivie de l'année. L'étudiant devra le changer à sa première connexion.
           </p>
           <button type="button" className="button button-ghost" onClick={() => setCredentials(null)}>
             J'ai noté le mot de passe

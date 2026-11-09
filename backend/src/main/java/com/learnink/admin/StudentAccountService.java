@@ -22,12 +22,12 @@ public class StudentAccountService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final TemporaryPasswordGenerator passwordGenerator;
+    private final DefaultPasswordGenerator passwordGenerator;
     private final ProgressService progressService;
     private final DatasourceCatalog datasourceCatalog;
 
     public StudentAccountService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                                 TemporaryPasswordGenerator passwordGenerator, ProgressService progressService,
+                                 DefaultPasswordGenerator passwordGenerator, ProgressService progressService,
                                  DatasourceCatalog datasourceCatalog) {
         this.datasourceCatalog = datasourceCatalog;
         this.userRepository = userRepository;
@@ -49,7 +49,7 @@ public class StudentAccountService {
         if (userRepository.existsByEmailIgnoreCase(email.trim())) {
             throw new InvalidRequestException("Un compte existe déjà pour " + email + ".");
         }
-        String temporaryPassword = passwordGenerator.generate();
+        String temporaryPassword = passwordGenerator.generate(email);
         User student = new User(email.trim(), passwordEncoder.encode(temporaryPassword), Role.STUDENT);
         student.assignDatasource(number);
         userRepository.save(student);
@@ -59,7 +59,7 @@ public class StudentAccountService {
     @Transactional
     public StudentCredentialsDto resetPassword(Long studentId) {
         User student = findStudent(studentId);
-        String temporaryPassword = passwordGenerator.generate();
+        String temporaryPassword = passwordGenerator.generate(student.getEmail());
         student.resetPassword(passwordEncoder.encode(temporaryPassword));
         return new StudentCredentialsDto(toDto(student, QueryEngine.SQL), temporaryPassword);
     }
