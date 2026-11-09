@@ -36,6 +36,9 @@ spring:
       minimum-idle: ${LEARNINK_DB_MIN_IDLE:1}
       idle-timeout: 30000
   jpa:
+    # Dialecte explicite : si la base est injoignable, l'erreur de connexion d'origine est affichée
+    # au lieu de « Unable to determine Dialect without JDBC metadata »
+    database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
       # Le schéma est créé par les migrations Flyway (db/migration) ; Hibernate se contente de le vérifier
       ddl-auto: validate
