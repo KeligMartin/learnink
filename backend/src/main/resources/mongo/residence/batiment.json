@@ -1,0 +1,6 @@
+[
+{"_id": 1, "nom": "Bâtiment A - Alan Turing", "adresse": "1 allée des Sciences"},
+{"_id": 2, "nom": "Bâtiment B - Ada Lovelace", "adresse": "3 allée des Sciences"},
+{"_id": 3, "nom": "Bâtiment C - Marie Curie", "adresse": "5 allée des Sciences"},
+{"_id": 4, "nom": "Bâtiment D - Grace Hopper", "adresse": "7 allée des Sciences"}
+]

@@ -1,0 +1,11 @@
+[
+{"_id": 1, "nom": "Agence Paris Nord", "ville": "Paris", "adresse": "12 rue de la Chapelle", "telephone": "01 40 12 30 30", "entrepots": [{"_id": 1, "nom": "Entrepôt Paris Nord 1", "capacite_max": 1500}, {"_id": 2, "nom": "Entrepôt Paris Nord 2", "capacite_max": 6000}]},
+{"_id": 2, "nom": "Agence Paris Sud", "ville": "Paris", "adresse": "85 avenue d'Italie", "telephone": "01 45 80 21 21", "entrepots": [{"_id": 3, "nom": "Entrepôt Paris Sud 1", "capacite_max": 6000}]},
+{"_id": 3, "nom": "Agence Lyon", "ville": "Lyon", "adresse": "40 rue de Gerland", "telephone": "04 72 10 44 00", "entrepots": [{"_id": 4, "nom": "Entrepôt Lyon 1", "capacite_max": 2500}, {"_id": 5, "nom": "Entrepôt Lyon 2", "capacite_max": 2500}]},
+{"_id": 4, "nom": "Agence Marseille", "ville": "Marseille", "adresse": "15 boulevard de Paris", "telephone": "04 91 22 10 10", "entrepots": [{"_id": 6, "nom": "Entrepôt Marseille 1", "capacite_max": 2500}, {"_id": 7, "nom": "Entrepôt Marseille 2", "capacite_max": 6000}]},
+{"_id": 5, "nom": "Agence Lille", "ville": "Lille", "adresse": "8 rue de Tournai", "telephone": "03 20 15 60 60", "entrepots": [{"_id": 8, "nom": "Entrepôt Lille 1", "capacite_max": 1500}, {"_id": 9, "nom": "Entrepôt Lille 2", "capacite_max": 2500}]},
+{"_id": 6, "nom": "Agence Bordeaux", "ville": "Bordeaux", "adresse": "120 quai de Bacalan", "telephone": "05 56 40 70 70", "entrepots": [{"_id": 10, "nom": "Entrepôt Bordeaux 1", "capacite_max": 6000}, {"_id": 11, "nom": "Entrepôt Bordeaux 2", "capacite_max": 1500}]},
+{"_id": 7, "nom": "Agence Nantes", "ville": "Nantes", "adresse": "3 boulevard de Chantenay", "telephone": "02 40 30 50 50", "entrepots": [{"_id": 12, "nom": "Entrepôt Nantes 1", "capacite_max": 2500}]},
+{"_id": 8, "nom": "Agence Rennes", "ville": "Rennes", "adresse": "27 route de Lorient", "telephone": "02 99 40 80 80", "entrepots": [{"_id": 13, "nom": "Entrepôt Rennes 1", "capacite_max": 1500}]},
+{"_id": 9, "nom": "Agence Toulouse", "ville": "Toulouse", "adresse": "60 chemin de la Flambère", "telephone": "05 61 30 90 90", "entrepots": [{"_id": 14, "nom": "Entrepôt Toulouse 1", "capacite_max": 6000}]}
+]

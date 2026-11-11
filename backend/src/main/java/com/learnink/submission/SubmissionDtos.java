@@ -18,9 +18,10 @@ public final class SubmissionDtos {
     /**
      * @param totalRows   nombre de lignes renvoyées par la requête
      * @param tooManyRows vrai si la requête dépasse la limite de lignes lues
+     * @param documents   documents JSON renvoyés par un moteur documentaire (MongoDB), absents en SQL
      */
     public record QueryResultDto(List<String> columns, List<List<Object>> rows, int totalRows,
-                                 boolean tooManyRows, double executionTimeMs) {
+                                 boolean tooManyRows, double executionTimeMs, List<String> documents) {
     }
 
     public record SubmissionResultDto(Long submissionId, double score, double maxScore, boolean correct,

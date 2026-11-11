@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
-import type { Engine, Progress } from '../api/types';
+import type { Engine, MongoProfile, Progress } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
 
 export function DashboardPage() {
-  const { engine, setEngine } = useAuth();
+  const { engine, setEngine, user } = useAuth();
   const [engines, setEngines] = useState<Engine[]>([]);
   const [progress, setProgress] = useState<Progress | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mongo, setMongo] = useState<MongoProfile | null>(null);
 
   useEffect(() => {
     api.engines().then(setEngines).catch(() => setEngines([]));
@@ -21,6 +22,9 @@ export function DashboardPage() {
       .progress(engine)
       .then(setProgress)
       .catch((e) => setError(e.message));
+    if (engine === 'MONGODB') {
+      api.mongoProfile().then(setMongo).catch(() => setMongo(null));
+    }
   }, [engine]);
 
   const selected = engines.find((e) => e.type === engine);
@@ -63,6 +67,12 @@ export function DashboardPage() {
         <div className="page-loading">Chargement…</div>
       ) : (
         <>
+          {engine === 'MONGODB' && user && !user.mongoConfigured && mongo && !mongo.sharedDatabaseAvailable && (
+            <p className="notice">
+              Partie NoSQL : importez le jeu de données dans votre propre base MongoDB, puis renseignez-la dans{' '}
+              <Link to="/mongodb">Ma base MongoDB</Link>.
+            </p>
+          )}
           <div className="card overall">
             <div>
               <strong>

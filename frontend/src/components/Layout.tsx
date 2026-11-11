@@ -14,6 +14,7 @@ export function Layout() {
             <NavLink to="/" end>
               Parcours
             </NavLink>
+            <NavLink to="/mongodb">Ma base MongoDB</NavLink>
             {user.role === 'TEACHER' && <NavLink to="/admin">Étudiants</NavLink>}
           </nav>
         )}

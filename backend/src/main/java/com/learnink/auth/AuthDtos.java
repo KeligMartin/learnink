@@ -16,11 +16,13 @@ public final class AuthDtos {
     public record ChangePasswordRequest(@NotBlank String currentPassword, @NotBlank String newPassword) {
     }
 
-    public record UserDto(Long id, String email, Role role, boolean mustChangePassword, int datasource) {
+    /** @param mongoConfigured vrai si l'utilisateur a renseigné sa base MongoDB personnelle */
+    public record UserDto(Long id, String email, Role role, boolean mustChangePassword, int datasource,
+                          boolean mongoConfigured) {
 
         public static UserDto from(User user) {
             return new UserDto(user.getId(), user.getEmail(), user.getRole(), user.isMustChangePassword(),
-                    user.getDatasource());
+                    user.getDatasource(), user.getMongoUri() != null);
         }
     }
 

@@ -42,6 +42,25 @@ learnink:
     query-timeout-seconds: 5
     max-compared-rows: 10000
     max-displayed-rows: 200
+  # Moteur NoSQL : chaque étudiant renseigne la chaîne de connexion de sa base (cluster Atlas) dans son profil
+  mongo:
+    # Base utilisée si la chaîne de connexion n'en indique pas
+    database: learnink
+    # Domaines autorisés pour les bases personnelles, séparés par des virgules
+    allowed-hosts: ${LEARNINK_MONGO_ALLOWED_HOSTS:mongodb.net}
+    timeout-seconds: 5
+    max-clients: 60
+    # Connexions ouvertes au plus vers chaque base partagée, par instance (à adapter à l'offre de l'add-on)
+    shared-pool-size: ${LEARNINK_MONGO_SHARED_POOL_SIZE:10}
+    # Jeu de données de chaque source ; uri = base partagée (chargée au démarrage), utilisée par les étudiants qui n'ont
+    # pas renseigné leur propre base, ex. un add-on MongoDB Clever Cloud (sa variable MONGODB_ADDON_URI)
+    datasets:
+      1:
+        name: residence
+        uri: ${LEARNINK_MONGO_1_URI:}
+      2:
+        name: transport
+        uri: ${LEARNINK_MONGO_2_URI:}
   seed:
     exercises: true
     demo-users: false

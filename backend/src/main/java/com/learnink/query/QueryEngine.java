@@ -2,7 +2,7 @@ package com.learnink.query;
 
 public enum QueryEngine {
     SQL("SQL (MySQL)"),
-    FIRESTORE("NoSQL (Firestore)");
+    MONGODB("NoSQL (MongoDB)");
 
     private final String label;
 

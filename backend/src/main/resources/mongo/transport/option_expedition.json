@@ -1,0 +1,5 @@
+[
+{"_id": 1, "nom": "Assurance", "tarifs": [{"prix": 2.5, "date_debut": {"$date": "2025-01-01T00:00:00Z"}, "date_fin": {"$date": "2026-05-31T00:00:00Z"}}, {"prix": 2.9, "date_debut": {"$date": "2026-06-01T00:00:00Z"}, "date_fin": null}]},
+{"_id": 2, "nom": "Remise contre signature", "tarifs": [{"prix": 1.5, "date_debut": {"$date": "2025-01-01T00:00:00Z"}, "date_fin": {"$date": "2026-03-31T00:00:00Z"}}, {"prix": 1.8, "date_debut": {"$date": "2026-04-01T00:00:00Z"}, "date_fin": null}]},
+{"_id": 3, "nom": "Livraison à horaire précis", "tarifs": [{"prix": 4.0, "date_debut": {"$date": "2025-01-01T00:00:00Z"}, "date_fin": null}]}
+]

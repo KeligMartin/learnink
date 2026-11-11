@@ -1,5 +1,5 @@
 export type Role = 'STUDENT' | 'TEACHER';
-export type QueryEngine = 'SQL' | 'FIRESTORE';
+export type QueryEngine = 'SQL' | 'MONGODB';
 
 export interface User {
   id: number;
@@ -7,6 +7,21 @@ export interface User {
   role: Role;
   mustChangePassword: boolean;
   datasource: number;
+  /** Base MongoDB personnelle renseignée */
+  mongoConfigured: boolean;
+}
+
+/** Base MongoDB personnelle de l'utilisateur connecté. */
+export interface MongoProfile {
+  configured: boolean;
+  /** Chaîne de connexion, mot de passe masqué */
+  uri?: string | null;
+  database: string;
+  dataset?: string | null;
+  expectedCollections: string[];
+  /** Collections absentes ou vides lors de la dernière vérification (absent si non vérifié) */
+  missingCollections?: string[] | null;
+  sharedDatabaseAvailable: boolean;
 }
 
 /** Source de données : un jeu de données et ses exercices. */
@@ -100,6 +115,8 @@ export interface QueryResult {
   totalRows: number;
   tooManyRows: boolean;
   executionTimeMs: number;
+  /** Documents JSON bruts (MongoDB) */
+  documents?: string[] | null;
 }
 
 export interface SubmissionResult {

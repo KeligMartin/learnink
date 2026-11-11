@@ -1,15 +1,33 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api/client';
-import type { ExerciseDetail, SchemaDescription, SubmissionHistory, SubmissionResult } from '../api/types';
+import type {
+  ExerciseDetail,
+  MongoProfile,
+  QueryEngine,
+  SchemaDescription,
+  SubmissionHistory,
+  SubmissionResult,
+} from '../api/types';
+import { DocumentList } from '../components/DocumentList';
 import { ResultChart } from '../components/ResultChart';
 import { ResultTable } from '../components/ResultTable';
 import { RichText } from '../components/RichText';
 import { SchemaExplorer } from '../components/SchemaExplorer';
 import { ScoreFeedback } from '../components/ScoreFeedback';
-import { SqlEditor } from '../components/SqlEditor';
+import { QueryEditor } from '../components/QueryEditor';
 
-const DEFAULT_QUERY = '-- Écrivez votre requête puis Ctrl + Entrée pour l\'exécuter\nSELECT ';
+const DEFAULT_QUERY: Record<QueryEngine, string> = {
+  SQL: '-- Écrivez votre requête puis Ctrl + Entrée pour l\'exécuter\nSELECT ',
+  MONGODB: '// Écrivez votre requête puis Ctrl + Entrée pour l\'exécuter\ndb.',
+};
+
+const TOOLBAR_HINT: Record<QueryEngine, string> = {
+  SQL: 'Lecture seule · SELECT uniquement',
+  MONGODB: 'Lecture seule · find, countDocuments, aggregate, distinct',
+};
+
+type ResultView = 'chart' | 'table' | 'documents';
 
 export function ExercisePage() {
   const exerciseId = Number(useParams().id);
@@ -20,7 +38,9 @@ export function ExercisePage() {
   const [submission, setSubmission] = useState<SubmissionResult | null>(null);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [view, setView] = useState<'chart' | 'table'>('chart');
+  const [view, setView] = useState<ResultView>('chart');
+  const [schemaError, setSchemaError] = useState<string | null>(null);
+  const [mongo, setMongo] = useState<MongoProfile | null>(null);
 
   useEffect(() => {
     setExercise(null);
@@ -30,8 +50,16 @@ export function ExercisePage() {
       .exercise(exerciseId)
       .then((detail) => {
         setExercise(detail);
-        setQuery(detail.lastQuery ?? DEFAULT_QUERY);
-        api.schema(detail.engine).then(setSchema).catch(() => undefined);
+        setQuery(detail.lastQuery ?? DEFAULT_QUERY[detail.engine]);
+        setView(detail.chart ? 'chart' : detail.engine === 'MONGODB' ? 'documents' : 'table');
+        setSchemaError(null);
+        api
+          .schema(detail.engine)
+          .then(setSchema)
+          .catch((e) => setSchemaError(e instanceof Error ? e.message : 'Schéma indisponible.'));
+        if (detail.engine === 'MONGODB') {
+          api.mongoProfile().then(setMongo).catch(() => setMongo(null));
+        }
       })
       .catch((e) => setError(e.message));
     api.history(exerciseId).then(setHistory).catch(() => setHistory([]));
@@ -64,6 +92,14 @@ export function ExercisePage() {
   }
   if (!exercise) return <div className="page-loading">Chargement…</div>;
 
+  const isMongo = exercise.engine === 'MONGODB';
+  const needsMongoSetup = isMongo && mongo != null && !mongo.configured && !mongo.sharedDatabaseAvailable;
+  const views: { id: ResultView; label: string }[] = [
+    ...(exercise.chart ? [{ id: 'chart' as const, label: 'Graphique' }] : []),
+    ...(isMongo ? [{ id: 'documents' as const, label: 'Documents' }] : []),
+    { id: 'table', label: 'Tableau' },
+  ];
+
   return (
     <div className="workspace">
       <aside className="panel statement">
@@ -87,8 +123,8 @@ export function ExercisePage() {
           )}
         </div>
 
-        <h2>Schéma de la base</h2>
-        <SchemaExplorer schema={schema} />
+        <h2>{isMongo ? 'Collections de la base' : 'Schéma de la base'}</h2>
+        {schemaError ? <p className="muted">{schemaError}</p> : <SchemaExplorer schema={schema} />}
 
         {history.length > 0 && (
           <>
@@ -112,7 +148,7 @@ export function ExercisePage() {
 
       <section className="panel editor-panel">
         <div className="editor-toolbar">
-          <span className="muted">Lecture seule · SELECT uniquement</span>
+          <span className="muted">{TOOLBAR_HINT[exercise.engine]}</span>
           <div className="toolbar-actions">
             {exercise.previousExerciseId && (
               <Link className="button button-ghost" to={`/exercises/${exercise.previousExerciseId}`}>
@@ -129,44 +165,47 @@ export function ExercisePage() {
             </button>
           </div>
         </div>
-        <SqlEditor value={query} onChange={setQuery} onRun={run} schema={schema} />
+        {needsMongoSetup && (
+          <p className="notice">
+            Pour exécuter vos requêtes, renseignez d'abord votre base MongoDB dans{' '}
+            <Link to="/mongodb">Ma base MongoDB</Link>.
+          </p>
+        )}
+        <QueryEditor engine={exercise.engine} value={query} onChange={setQuery} onRun={run} schema={schema} />
 
         <div className="output">
           {error && <p className="form-error">{error}</p>}
           {submission ? (
             <>
               <ScoreFeedback submission={submission} />
-              {submission.result && exercise.chart ? (
-                <section className="result-views">
-                  <div className="segmented" role="tablist" aria-label="Affichage du résultat">
-                    <button
-                      type="button"
-                      role="tab"
-                      aria-selected={view === 'chart'}
-                      className={view === 'chart' ? 'active' : ''}
-                      onClick={() => setView('chart')}
-                    >
-                      Graphique
-                    </button>
-                    <button
-                      type="button"
-                      role="tab"
-                      aria-selected={view === 'table'}
-                      className={view === 'table' ? 'active' : ''}
-                      onClick={() => setView('table')}
-                    >
-                      Tableau
-                    </button>
-                  </div>
-                  {view === 'chart' ? (
-                    <ResultChart result={submission.result} spec={exercise.chart} />
-                  ) : (
-                    <ResultTable result={submission.result} />
-                  )}
-                </section>
-              ) : (
-                submission.result && <ResultTable result={submission.result} />
-              )}
+              {submission.result &&
+                (views.length > 1 ? (
+                  <section className="result-views">
+                    <div className="segmented" role="tablist" aria-label="Affichage du résultat">
+                      {views.map((v) => (
+                        <button
+                          key={v.id}
+                          type="button"
+                          role="tab"
+                          aria-selected={view === v.id}
+                          className={view === v.id ? 'active' : ''}
+                          onClick={() => setView(v.id)}
+                        >
+                          {v.label}
+                        </button>
+                      ))}
+                    </div>
+                    {view === 'chart' && exercise.chart ? (
+                      <ResultChart result={submission.result} spec={exercise.chart} />
+                    ) : view === 'documents' && isMongo ? (
+                      <DocumentList result={submission.result} />
+                    ) : (
+                      <ResultTable result={submission.result} />
+                    )}
+                  </section>
+                ) : (
+                  <ResultTable result={submission.result} />
+                ))}
             </>
           ) : (
             <p className="muted placeholder">Exécutez votre requête pour voir le résultat et votre note.</p>

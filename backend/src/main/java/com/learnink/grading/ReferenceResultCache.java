@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * Garde en mémoire le résultat et le temps d'exécution des solutions de référence :
- * la base bac à sable étant en lecture seule, ils ne changent pas.
+ * les bases interrogées étant en lecture seule, ils ne changent pas.
  */
 @Component
 public class ReferenceResultCache {
@@ -22,10 +22,24 @@ public class ReferenceResultCache {
 
     private final ConcurrentMap<String, ReferenceSnapshot> cache = new ConcurrentHashMap<>();
 
-    /** La source de données fait partie de la clé : chaque base a ses propres données et ses propres temps. */
+    /**
+     * La base de référence fait partie de la clé : chaque base a ses propres données et ses propres temps
+     * (base partagée d'une source de données, ou base personnelle d'un étudiant).
+     */
     public ReferenceSnapshot get(QueryExecutionStrategy strategy, String referenceQuery, QueryTarget target) {
-        return cache.computeIfAbsent(strategy.engine() + ":" + target.datasource() + ":" + referenceQuery,
-                key -> measure(strategy, referenceQuery, QueryTarget.system(target.datasource())));
+        QueryTarget referenceTarget = strategy.referenceTarget(target);
+        return cache.computeIfAbsent(key(strategy, referenceTarget) + referenceQuery,
+                key -> measure(strategy, referenceQuery, referenceTarget));
+    }
+
+    /** Oublie les résultats calculés sur la base personnelle d'un utilisateur (base modifiée ou remplacée). */
+    public void evictUser(Long userId) {
+        String marker = ":u" + userId + ":";
+        cache.keySet().removeIf(key -> key.contains(marker));
+    }
+
+    private static String key(QueryExecutionStrategy strategy, QueryTarget target) {
+        return strategy.engine() + ":" + target.datasource() + ":" + (target.userId() == null ? "s" : "u" + target.userId()) + ":";
     }
 
     private static ReferenceSnapshot measure(QueryExecutionStrategy strategy, String referenceQuery, QueryTarget target) {

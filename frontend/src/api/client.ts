@@ -3,6 +3,7 @@ import type {
   Engine,
   ExerciseDetail,
   LoginResponse,
+  MongoProfile,
   Progress,
   QueryEngine,
   SchemaDescription,
@@ -95,4 +96,28 @@ export const api = {
   changeOwnDatasource: (datasource: number) =>
     request<User>('/admin/me/datasource', { method: 'PUT', body: JSON.stringify({ datasource }) }),
   resetStudentPassword: (id: number) => post<StudentCredentials>(`/admin/students/${id}/reset-password`),
+
+  mongoProfile: () => request<MongoProfile>('/me/mongodb'),
+  saveMongo: (uri: string) => request<MongoProfile>('/me/mongodb', { method: 'PUT', body: JSON.stringify({ uri }) }),
+  verifyMongo: () => post<MongoProfile>('/me/mongodb/verify'),
+  removeMongo: () => request<MongoProfile>('/me/mongodb', { method: 'DELETE' }),
+  /** Télécharge l'archive du jeu de données MongoDB (un fichier JSON par collection). */
+  downloadMongoDataset: async (datasource: number) => {
+    const token = tokenStore.get();
+    const response = await fetch(`/api/me/mongodb/dataset/${datasource}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      throw new ApiError(response.status, body?.code ?? 'ERROR', body?.message ?? `Erreur ${response.status}`);
+    }
+    const disposition = response.headers.get('Content-Disposition') ?? '';
+    const filename = /filename="([^"]+)"/.exec(disposition)?.[1] ?? 'learnink-mongodb.zip';
+    const url = URL.createObjectURL(await response.blob());
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  },
 };

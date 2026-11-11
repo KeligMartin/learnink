@@ -1,0 +1,9 @@
+[
+{"_id": 1, "libelle": "Végétarien"},
+{"_id": 2, "libelle": "Végétalien"},
+{"_id": 3, "libelle": "Sans gluten"},
+{"_id": 4, "libelle": "Sans porc"},
+{"_id": 5, "libelle": "Allergie aux arachides"},
+{"_id": 6, "libelle": "Allergie au lait"},
+{"_id": 7, "libelle": "Allergie au poisson"}
+]

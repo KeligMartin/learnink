@@ -21,4 +21,13 @@ public interface QueryExecutionStrategy {
 
     /** Décrit les collections / tables interrogeables par les étudiants. */
     SchemaDescription describeSchema(QueryTarget target);
+
+    /**
+     * Base sur laquelle exécuter la solution de référence pour noter la requête d'un utilisateur.
+     * Par défaut la base partagée de sa source de données ; un moteur « une base par étudiant » renvoie la sienne,
+     * pour comparer les résultats et les temps sur les mêmes données.
+     */
+    default QueryTarget referenceTarget(QueryTarget target) {
+        return QueryTarget.system(target.datasource());
+    }
 }

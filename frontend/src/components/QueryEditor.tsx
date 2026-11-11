@@ -2,7 +2,7 @@ import Editor, { type OnMount } from '@monaco-editor/react';
 import './monacoSetup';
 import type { editor, Position } from 'monaco-editor/editor/editor.api';
 import { useEffect, useRef } from 'react';
-import type { SchemaDescription } from '../api/types';
+import type { QueryEngine, SchemaDescription } from '../api/types';
 import { useColorScheme } from './useColorScheme';
 
 const SQL_KEYWORDS = [
@@ -12,14 +12,26 @@ const SQL_KEYWORDS = [
   'UNION', 'WITH', 'CASE', 'WHEN', 'THEN', 'ELSE', 'END', 'OVER', 'PARTITION BY', 'RANK',
 ];
 
+/** Méthodes mongosh acceptées par la plateforme, puis opérateurs et étapes d'agrégation courants. */
+const MONGO_METHODS = ['find', 'findOne', 'countDocuments', 'aggregate', 'distinct', 'sort', 'limit', 'skip', 'count'];
+const MONGO_OPERATORS = [
+  '$eq', '$ne', '$gt', '$gte', '$lt', '$lte', '$in', '$nin', '$and', '$or', '$not', '$exists', '$regex', '$size',
+  '$elemMatch', '$expr', '$match', '$project', '$group', '$sort', '$limit', '$skip', '$unwind', '$lookup', '$count',
+  '$addFields', '$sum', '$avg', '$min', '$max', '$first', '$last', '$push', '$round', '$year', '$month',
+  '$dayOfMonth', '$concat', '$toUpper', '$cond', '$ifNull', '$arrayElemAt',
+];
+
+const LANGUAGE: Record<QueryEngine, string> = { SQL: 'sql', MONGODB: 'javascript' };
+
 interface Props {
+  engine: QueryEngine;
   value: string;
   onChange: (value: string) => void;
   onRun: () => void;
   schema?: SchemaDescription;
 }
 
-export function SqlEditor({ value, onChange, onRun, schema }: Props) {
+export function QueryEditor({ engine, value, onChange, onRun, schema }: Props) {
   const colorScheme = useColorScheme();
   const runRef = useRef(onRun);
   const schemaRef = useRef(schema);
@@ -35,23 +47,40 @@ export function SqlEditor({ value, onChange, onRun, schema }: Props) {
     editor.addCommand(monaco.KeyMod.WinCtrl | monaco.KeyCode.Enter, () => runRef.current());
     editor.focus();
 
-    // Autocomplétion : mots-clés SQL, tables et colonnes de la base bac à sable
+    // Autocomplétion : mots-clés du langage, tables / collections et colonnes / champs de la base
     disposables.current.push(
-      monaco.languages.registerCompletionItemProvider('sql', {
+      monaco.languages.registerCompletionItemProvider(LANGUAGE[engine], {
+        triggerCharacters: engine === 'MONGODB' ? ['$', '.'] : undefined,
         provideCompletionItems: (model: editor.ITextModel, position: Position) => {
           const word = model.getWordUntilPosition(position);
+          const before = model.getValueInRange({
+            startLineNumber: position.lineNumber,
+            endLineNumber: position.lineNumber,
+            startColumn: Math.max(1, word.startColumn - 1),
+            endColumn: word.startColumn,
+          });
+          // En MongoDB, le « $ » qui précède le mot fait partie de l'opérateur à compléter
+          const startColumn = engine === 'MONGODB' && before === '$' ? word.startColumn - 1 : word.startColumn;
           const range = {
             startLineNumber: position.lineNumber,
             endLineNumber: position.lineNumber,
-            startColumn: word.startColumn,
+            startColumn,
             endColumn: word.endColumn,
           };
-          const { Keyword, Class, Field } = monaco.languages.CompletionItemKind;
+          const { Keyword, Class, Field, Method } = monaco.languages.CompletionItemKind;
           const tables = schemaRef.current?.tables ?? [];
+          const keywords =
+            engine === 'MONGODB'
+              ? [
+                  ...MONGO_METHODS.map((m) => ({ label: m, kind: Method, insertText: m, range })),
+                  ...MONGO_OPERATORS.map((o) => ({ label: o, kind: Keyword, insertText: o, range })),
+                ]
+              : SQL_KEYWORDS.map((k) => ({ label: k, kind: Keyword, insertText: k, range }));
+          const containerLabel = engine === 'MONGODB' ? 'collection' : 'table';
           return {
             suggestions: [
-              ...SQL_KEYWORDS.map((k) => ({ label: k, kind: Keyword, insertText: k, range })),
-              ...tables.map((t) => ({ label: t.name, kind: Class, insertText: t.name, detail: 'table', range })),
+              ...keywords,
+              ...tables.map((t) => ({ label: t.name, kind: Class, insertText: t.name, detail: containerLabel, range })),
               ...tables.flatMap((t) =>
                 t.columns.map((c) => ({
                   label: c.name,
@@ -72,7 +101,7 @@ export function SqlEditor({ value, onChange, onRun, schema }: Props) {
     <div className="editor-frame">
       <Editor
         height="100%"
-        defaultLanguage="sql"
+        language={LANGUAGE[engine]}
         value={value}
         onChange={(v) => onChange(v ?? '')}
         onMount={handleMount}

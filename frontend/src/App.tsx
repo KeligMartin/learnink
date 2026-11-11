@@ -7,6 +7,7 @@ import { AdminPage } from './pages/AdminPage';
 import { ChangePasswordPage } from './pages/ChangePasswordPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
+import { MongoProfilePage } from './pages/MongoProfilePage';
 
 // Monaco et Chart.js ne sont chargés qu'à l'ouverture d'un exercice
 const ExercisePage = lazy(() => import('./pages/ExercisePage').then((m) => ({ default: m.ExercisePage })));
@@ -31,6 +32,7 @@ export function App() {
               }
             />
             <Route path="/admin" element={<RequireAuth role="TEACHER"><AdminPage /></RequireAuth>} />
+            <Route path="/mongodb" element={<RequireAuth><MongoProfilePage /></RequireAuth>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

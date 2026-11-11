@@ -1,6 +1,6 @@
 # Learnink
 
-Plateforme d'e-learning pour apprendre à écrire des requêtes de base de données (SQL, puis Firestore).
+Plateforme d'e-learning pour apprendre à écrire des requêtes de base de données : SQL (MySQL) et NoSQL (MongoDB).
 Les étudiants écrivent leurs requêtes dans un IDE web et reçoivent **en direct une note sur 10**.
 
 ## Démarrage rapide (développement)
@@ -68,7 +68,7 @@ Deux bases distinctes côté backend :
 ```
 QueryExecutionStrategy            (interface : engine, isAvailable, execute, describeSchema)
 ├── SqlQueryExecutionStrategy     MySQL / H2, sur la base de la source de données de l'utilisateur
-└── FirestoreQueryExecutionStrategy   à implémenter (déclarée indisponible pour l'instant)
+└── MongoQueryExecutionStrategy   MongoDB, sur la base personnelle de l'étudiant (ou la base partagée de sa source)
 
 QueryExecutionStrategyRegistry    sélectionne la stratégie selon le moteur de l'exercice
 ```
@@ -81,7 +81,8 @@ Les règles de qualité SQL sont des beans `SqlQualityRule` indépendants : en a
 | Package | Rôle |
 |---|---|
 | `auth`, `security`, `user` | Connexion, JWT, politique de mot de passe |
-| `query` | Stratégies d'exécution (SQL, Firestore), validation lecture seule, schéma |
+| `query` | Stratégies d'exécution (SQL, MongoDB), validation lecture seule, schéma |
+| `profile` | Base MongoDB personnelle de l'étudiant, téléchargement du jeu de données |
 | `grading` | Comparaison des résultats, performance, règles de qualité, note finale |
 | `exercise`, `submission`, `progress` | Exercices, tentatives, déblocage des niveaux |
 | `admin` | Gestion des comptes étudiants |
@@ -137,6 +138,43 @@ python3 backend/tools/generate_sandbox_data.py > backend/src/main/resources/sand
 
 ```bash
 python3 backend/tools/generate_transport_data.py > backend/src/main/resources/sandbox/transport/data.sql
+```
+
+## Parcours NoSQL (MongoDB)
+
+Chaque jeu de données existe aussi en MongoDB, avec les **mêmes 26 exercices** (`seed/exercises-*-mongodb.json`) :
+même progression, mêmes résultats attendus. Le modèle de documents est « NoSQL » : les informations lues ensemble sont
+imbriquées ou recopiées (le bâtiment dans la chambre, les ingrédients dans le plat, l'historique de suivi dans le colis),
+les relations partagées restent des références (`evenement_id`, `formateur_id`) à suivre avec `$lookup`.
+
+| Niveau | SQL | MongoDB |
+|---|---|---|
+| 1 | `SELECT … WHERE … ORDER BY`, `COUNT`, `AVG` | `find(filtre, projection).sort()`, `countDocuments`, premier `aggregate` |
+| 2 | Jointures | Documents imbriqués (`$unwind`), références étendues, `$lookup` |
+| 3 | `GROUP BY` / `HAVING` + graphiques | `$group` / `$match` après regroupement + graphiques |
+
+- **Syntaxe** : celle de mongosh (`db.chambre.find({ capacite: { $gte: 2 } }, { _id: 0, numero: 1 })`). La requête
+  est analysée par `MongoQueryParser` puis traduite en appels du pilote Java : aucun code n'est exécuté. Seules les
+  lectures sont acceptées (`find`, `findOne`, `countDocuments`, `aggregate`, `distinct`) ; `$out`, `$merge`, `$where`,
+  `$function`… sont refusés.
+- **Base de chaque étudiant** : page *Ma base MongoDB*. L'étudiant crée un cluster gratuit MongoDB Atlas, télécharge
+  le jeu de données (un JSON par collection), l'importe dans la base `learnink` (Compass ou `mongoimport`) et colle sa
+  chaîne de connexion. La plateforme teste la connexion et la présence des collections. Seuls les serveurs des domaines
+  de `LEARNINK_MONGO_ALLOWED_HOSTS` (défaut : `mongodb.net`) sont acceptés.
+- **Base partagée (facultative)** : `LEARNINK_MONGO_1_URI` / `LEARNINK_MONGO_2_URI` (ex. un add-on MongoDB Clever
+  Cloud). Elle est chargée automatiquement au démarrage et sert aux étudiants qui n'ont pas renseigné leur base.
+- **Notation** : la solution de référence s'exécute sur la même base que la requête de l'étudiant. La qualité vérifie
+  la projection (l'équivalent de `SELECT *`) et qu'un `$match` n'arrive pas inutilement après un `$lookup` / `$unwind`.
+
+Les JSON sont générés à partir des bases SQL, puis toutes les solutions sont vérifiées sur un MongoDB embarqué
+(10/10 et résultat identique à l'exercice SQL) :
+
+```bash
+python3 backend/tools/generate_mongo_data.py
+```
+
+```bash
+cd backend && mvn test -Dmongo-it=true -Dtest=MongoReferenceSolutionsTest
 ```
 
 ## Déploiement
@@ -214,6 +252,8 @@ latence minimale vers la base.
 | `LEARNINK_SANDBOX_2_ADMIN_USER`, `LEARNINK_SANDBOX_2_ADMIN_PASSWORD` | propriétaire de learnink_transport |
 | `LEARNINK_SANDBOX_2_USER`, `LEARNINK_SANDBOX_2_PASSWORD` | utilisateur en lecture seule de learnink_transport |
 | `LEARNINK_DB_POOL_SIZE`, `LEARNINK_SANDBOX_1_POOL_SIZE`, `LEARNINK_SANDBOX_2_POOL_SIZE` | `4`, `3`, `3` avec des add-ons DEV (5 connexions chacun) ; à retirer avec des offres dédiées |
+| `LEARNINK_MONGO_1_URI`, `LEARNINK_MONGO_2_URI` | facultatif : base MongoDB partagée de chaque source (sinon chaque étudiant renseigne la sienne) |
+| `LEARNINK_MONGO_ALLOWED_HOSTS` | facultatif : domaines autorisés pour les bases des étudiants (défaut `mongodb.net`) |
 
 Chaque base est chargée au démarrage si elle est vide ou si son jeu de données a changé (y compris quand une source
 change de base). Mélanger l'hôte, la base et l'utilisateur de deux add-ons provoque
@@ -267,6 +307,5 @@ Puis http://localhost:8080 avec le compte enseignant défini dans `.env`.
 
 ## Reste à faire
 
-- **Firestore** : implémenter `FirestoreQueryExecutionStrategy` (un projet / une base par étudiant), le langage de requête proposé aux étudiants et les exercices associés.
 - Sauvegarde de la base applicative : vérifier les sauvegardes proposées par le fournisseur de la base externe.
 - Limitation du nombre de tentatives de connexion.

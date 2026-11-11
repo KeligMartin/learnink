@@ -1,0 +1,7 @@
+[
+{"_id": 1, "nom": "Livraison standard", "description": "Livraison à domicile en 2 à 4 jours ouvrés", "conditions": null, "prix_base": 6.9, "prix_kg": 0.45},
+{"_id": 2, "nom": "Livraison express", "description": "Livraison le jour ouvré suivant", "conditions": "Commande avant 17 h", "prix_base": 14.9, "prix_kg": 0.8},
+{"_id": 3, "nom": "Livraison en point relais", "description": "Retrait en point relais", "conditions": "Colis de 20 kg maximum", "prix_base": 4.9, "prix_kg": 0.35},
+{"_id": 4, "nom": "Livraison sur rendez-vous", "description": "Livraison sur un créneau choisi par le destinataire", "conditions": null, "prix_base": 11.9, "prix_kg": 0.5},
+{"_id": 5, "nom": "Livraison de colis volumineux", "description": "Colis lourds ou encombrants, livraison à deux", "conditions": "Au-delà de 30 kg", "prix_base": 24.9, "prix_kg": 0.6}
+]

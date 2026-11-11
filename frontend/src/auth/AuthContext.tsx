@@ -17,7 +17,7 @@ const ENGINE_KEY = 'learnink.engine';
 
 function readEngine(): QueryEngine {
   try {
-    return localStorage.getItem(ENGINE_KEY) === 'FIRESTORE' ? 'FIRESTORE' : 'SQL';
+    return localStorage.getItem(ENGINE_KEY) === 'MONGODB' ? 'MONGODB' : 'SQL';
   } catch {
     return 'SQL';
   }

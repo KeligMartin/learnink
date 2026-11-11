@@ -81,8 +81,11 @@ public class SubmissionService {
             return null;
         }
         List<List<Object>> displayed = result.rows().stream().limit(sandboxProperties.maxDisplayedRows()).toList();
+        List<String> documents = result.documents() == null
+                ? null
+                : result.documents().stream().limit(sandboxProperties.maxDisplayedRows()).toList();
         return new QueryResultDto(result.columns(), displayed, result.rowCount(), result.truncated(),
-                toMillis(result.executionTimeNanos()));
+                toMillis(result.executionTimeNanos()), documents);
     }
 
     private static double toMillis(long nanos) {

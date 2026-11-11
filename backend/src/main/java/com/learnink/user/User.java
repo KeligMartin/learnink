@@ -39,6 +39,10 @@ public class User {
     @Column(nullable = false, columnDefinition = "integer default 1")
     private int datasource = 1;
 
+    /** Chaîne de connexion de la base MongoDB personnelle de l'étudiant (ex. son cluster Atlas), ou null. */
+    @Column(length = 500)
+    private String mongoUri;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -60,6 +64,14 @@ public class User {
 
     public void assignDatasource(int datasource) {
         this.datasource = datasource;
+    }
+
+    public void configureMongo(String uri) {
+        this.mongoUri = uri;
+    }
+
+    public String getMongoUri() {
+        return mongoUri;
     }
 
     public void resetPassword(String temporaryPasswordHash) {

@@ -1,0 +1,324 @@
+[
+  {
+    "code": "resm-1-01",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 1,
+    "position": 1,
+    "title": "Les bâtiments de la résidence",
+    "statement": "Affichez le nom et l'adresse de tous les bâtiments, triés par nom.\n\nCollection utile : `batiment`.\n\nEn MongoDB, `find(filtre, projection)` : le filtre `{}` garde tous les documents, la projection choisit les champs (`1` pour garder, `_id: 0` pour retirer l'identifiant, toujours renvoyé sinon). `.sort({ champ: 1 })` trie par ordre croissant.",
+    "referenceQuery": "db.batiment.find({}, { _id: 0, nom: 1, adresse: 1 }).sort({ nom: 1 })",
+    "orderMatters": true
+  },
+  {
+    "code": "resm-1-02",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 1,
+    "position": 2,
+    "title": "Chambres partagées",
+    "statement": "Affichez le numéro, l'étage et la capacité des chambres pouvant accueillir au moins 2 personnes, triées par numéro.\n\nCollection utile : `chambre`.\n\nIndice : les comparaisons s'écrivent avec des opérateurs : `{ capacite: { $gte: 2 } }` (`$gt`, `$gte`, `$lt`, `$lte`, `$ne`).",
+    "referenceQuery": "db.chambre.find({ capacite: { $gte: 2 } }, { _id: 0, numero: 1, etage: 1, capacite: 1 }).sort({ numero: 1 })",
+    "orderMatters": true
+  },
+  {
+    "code": "resm-1-03",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 1,
+    "position": 3,
+    "title": "Les petits prix",
+    "statement": "Affichez le nom et le prix indicatif des plats coûtant strictement moins de 1,50 €, du moins cher au plus cher. En cas d'égalité de prix, triez par nom.\n\nCollection utile : `plat`.\n\nIndice : `sort` accepte plusieurs champs, dans l'ordre de priorité.",
+    "referenceQuery": "db.plat.find({ prix_indicatif: { $lt: 1.5 } }, { _id: 0, nom: 1, prix_indicatif: 1 }).sort({ prix_indicatif: 1, nom: 1 })",
+    "orderMatters": true
+  },
+  {
+    "code": "resm-1-04",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 1,
+    "position": 4,
+    "title": "Ingrédients à commander",
+    "statement": "Le restaurant doit recommander les ingrédients dont le stock est passé sous la quantité minimale à conserver.\n\nAffichez leur nom, leur stock et leur stock minimum.\n\nCollection utile : `ingredient`.\n\nIndice : pour comparer deux champs d'un même document, utilisez `$expr` : `{ $expr: { $lt: [\"$stock\", \"$stock_minimum\"] } }` (un champ précédé de `$` désigne sa valeur).",
+    "referenceQuery": "db.ingredient.find({ $expr: { $lt: [\"$stock\", \"$stock_minimum\"] } }, { _id: 0, nom: 1, stock: 1, stock_minimum: 1 })",
+    "orderMatters": false
+  },
+  {
+    "code": "resm-1-05",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 1,
+    "position": 5,
+    "title": "Occupations en cours",
+    "statement": "Une occupation est en cours lorsque sa date de fin vaut `null`.\n\nAffichez le nom de l'étudiant, le numéro de la chambre et la date de début de toutes les occupations en cours.\n\nCollection utile : `occupation`. L'étudiant et la chambre y sont recopiés sous forme de sous-documents : on désigne leurs champs avec un point, entre guillemets (`\"etudiant.nom\": 1`).",
+    "referenceQuery": "db.occupation.find({ date_fin: null }, { _id: 0, \"etudiant.nom\": 1, \"chambre.numero\": 1, date_debut: 1 })",
+    "orderMatters": false
+  },
+  {
+    "code": "resm-1-06",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 1,
+    "position": 6,
+    "title": "Les événements de 2026",
+    "statement": "Affichez le nom, la date et le lieu des événements ayant lieu en 2026, dans l'ordre chronologique.\n\nCollection utile : `evenement`.\n\nIndice : les dates s'écrivent `ISODate(\"2026-01-01\")` ; combinez deux opérateurs sur le même champ : `{ $gte: ..., $lt: ... }`.",
+    "referenceQuery": "db.evenement.find({ date_evenement: { $gte: ISODate(\"2026-01-01\"), $lt: ISODate(\"2027-01-01\") } }, { _id: 0, nom: 1, date_evenement: 1, lieu: 1 }).sort({ date_evenement: 1 })",
+    "orderMatters": true
+  },
+  {
+    "code": "resm-1-07",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 1,
+    "position": 7,
+    "title": "Les soirées pizza",
+    "statement": "Affichez le nom et la date de tous les événements dont le nom contient le mot « pizza ».\n\nCollection utile : `evenement`.\n\nIndice : l'équivalent de `LIKE '%pizza%'` est une expression régulière : `{ nom: /pizza/i }` (`i` ignore les majuscules).",
+    "referenceQuery": "db.evenement.find({ nom: /pizza/i }, { _id: 0, nom: 1, date_evenement: 1 })",
+    "orderMatters": false
+  },
+  {
+    "code": "resm-1-08",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 1,
+    "position": 8,
+    "title": "Combien d'annulations ?",
+    "statement": "Comptez le nombre de réservations qui ont été annulées.\n\nCollection utile : `reservation`.\n\nIndice : `countDocuments(filtre)` compte les documents qui correspondent au filtre.",
+    "referenceQuery": "db.reservation.countDocuments({ annulee: true })",
+    "orderMatters": false
+  },
+  {
+    "code": "resm-1-09",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 1,
+    "position": 9,
+    "title": "Prix moyen d'un plat",
+    "statement": "Calculez le prix indicatif moyen de l'ensemble des plats, arrondi à 2 décimales.\n\nCollection utile : `plat`.\n\nIndice : un calcul sur plusieurs documents passe par le pipeline d'agrégation : `aggregate([ { $group: { _id: null, moyenne: { $avg: \"$prix_indicatif\" } } } ])`. Arrondissez ensuite avec `$round` dans une étape `$project`.",
+    "referenceQuery": "db.plat.aggregate([ { $group: { _id: null, prix_moyen: { $avg: \"$prix_indicatif\" } } }, { $project: { _id: 0, prix_moyen: { $round: [\"$prix_moyen\", 2] } } } ])",
+    "orderMatters": false
+  },
+  {
+    "code": "resm-2-01",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 2,
+    "position": 1,
+    "title": "Qui habite où ?",
+    "statement": "Pour chaque occupation en cours, affichez le prénom et le nom de l'étudiant, le numéro de sa chambre et le nom du bâtiment.\n\nEn SQL, il fallait quatre tables. Ici, regardez un document de la collection `occupation` : les informations lues ensemble y sont **recopiées** (on parle de dénormalisation). Une seule collection suffit.",
+    "referenceQuery": "db.occupation.find({ date_fin: null }, { _id: 0, \"etudiant.prenom\": 1, \"etudiant.nom\": 1, \"chambre.numero\": 1, \"chambre.batiment\": 1 })",
+    "orderMatters": false
+  },
+  {
+    "code": "resm-2-02",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 2,
+    "position": 2,
+    "title": "Le menu de la soirée pizza",
+    "statement": "Affichez le nom et le type de chaque plat du menu « Menu soirée pizza », dans l'ordre où ils sont servis.\n\nCollection utile : `menu`. Ses plats sont **imbriqués** dans un tableau `plats`.\n\nIndice : dans un pipeline, `$match` filtre, `$unwind: \"$plats\"` produit un document par élément du tableau, `$sort` trie et `$project` choisit les champs (`{ nom: \"$plats.nom\" }` renomme).",
+    "referenceQuery": "db.menu.aggregate([ { $match: { nom: \"Menu soirée pizza\" } }, { $unwind: \"$plats\" }, { $sort: { \"plats.ordre\": 1 } }, { $project: { _id: 0, nom: \"$plats.nom\", type: \"$plats.type\" } } ])",
+    "orderMatters": true
+  },
+  {
+    "code": "resm-2-04",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 2,
+    "position": 3,
+    "title": "La recette de la crêpe",
+    "statement": "Affichez le nom, la quantité et l'unité de mesure de chaque ingrédient nécessaire à la préparation du plat « Crêpe au sucre ».\n\nCollection utile : `plat` (tableau `ingredients`).",
+    "referenceQuery": "db.plat.aggregate([ { $match: { nom: \"Crêpe au sucre\" } }, { $unwind: \"$ingredients\" }, { $project: { _id: 0, nom: \"$ingredients.nom\", quantite: \"$ingredients.quantite\", unite: \"$ingredients.unite\" } } ])",
+    "orderMatters": false
+  },
+  {
+    "code": "resm-2-05",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 2,
+    "position": 4,
+    "title": "Comparer les fournisseurs",
+    "statement": "Le restaurant cherche le meilleur prix pour le sucre. Affichez le nom de chaque fournisseur proposant l'ingrédient « Sucre », son prix et l'unité d'achat, du moins cher au plus cher.\n\nCollection utile : `ingredient` (tableau `fournisseurs`).",
+    "referenceQuery": "db.ingredient.aggregate([ { $match: { nom: \"Sucre\" } }, { $unwind: \"$fournisseurs\" }, { $sort: { \"fournisseurs.prix\": 1 } }, { $project: { _id: 0, nom: \"$fournisseurs.nom\", prix: \"$fournisseurs.prix\", unite_achat: \"$fournisseurs.unite_achat\" } } ])",
+    "orderMatters": true
+  },
+  {
+    "code": "resm-2-09",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 2,
+    "position": 5,
+    "title": "L'équipe de la soirée internationale",
+    "statement": "Affichez le prénom, le nom et le rôle de chaque étudiant ayant participé à l'organisation de l'événement « Soirée internationale ».\n\nCollection utile : `evenement` (tableau `participants`).",
+    "referenceQuery": "db.evenement.aggregate([ { $match: { nom: \"Soirée internationale\" } }, { $unwind: \"$participants\" }, { $project: { _id: 0, prenom: \"$participants.prenom\", nom: \"$participants.nom\", role: \"$participants.role\" } } ])",
+    "orderMatters": false
+  },
+  {
+    "code": "resm-2-10",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 2,
+    "position": 6,
+    "title": "Interdit aux végétariens",
+    "statement": "Affichez le nom des plats incompatibles avec la contrainte alimentaire « Végétarien ».\n\nCollection utile : `plat`. Le champ `incompatibilites` est un tableau de libellés.\n\nIndice : sur un tableau, `{ incompatibilites: \"Végétarien\" }` garde les documents dont le tableau **contient** cette valeur.",
+    "referenceQuery": "db.plat.find({ incompatibilites: \"Végétarien\" }, { _id: 0, nom: 1 })",
+    "orderMatters": false
+  },
+  {
+    "code": "resm-2-11",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 2,
+    "position": 7,
+    "title": "Événements sans repas",
+    "statement": "Certains événements ne donnent lieu à aucun repas spécial. Affichez le nom et la date de ces événements.\n\nCollections utiles : `evenement` et `repas`. Les repas ne sont pas imbriqués dans les événements : chaque repas **référence** son événement par `evenement_id`.\n\nIndice : `$lookup` est la jointure de MongoDB : `{ $lookup: { from: \"repas\", localField: \"_id\", foreignField: \"evenement_id\", as: \"repas\" } }` ajoute à chaque événement le tableau de ses repas. Gardez ensuite ceux dont le tableau est vide (`{ repas: { $size: 0 } }`).",
+    "referenceQuery": "db.evenement.aggregate([ { $lookup: { from: \"repas\", localField: \"_id\", foreignField: \"evenement_id\", as: \"repas\" } }, { $match: { repas: { $size: 0 } } }, { $project: { _id: 0, nom: 1, date_evenement: 1 } } ])",
+    "orderMatters": false
+  },
+  {
+    "code": "resm-2-12",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 2,
+    "position": 8,
+    "title": "Qui a formé qui ?",
+    "statement": "La collection `formation` relie deux étudiants par leurs identifiants : le formateur (`formateur_id`) et l'étudiant formé (`forme_id`).\n\nAffichez, pour chaque formation, le prénom et le nom du formateur, le prénom et le nom de l'étudiant formé, et la date de début.\n\nIndice : deux `$lookup` vers `etudiant`, avec deux noms différents (`as`), puis `$unwind` sur chacun pour passer du tableau au document.",
+    "referenceQuery": "db.formation.aggregate([ { $lookup: { from: \"etudiant\", localField: \"formateur_id\", foreignField: \"_id\", as: \"formateur\" } }, { $lookup: { from: \"etudiant\", localField: \"forme_id\", foreignField: \"_id\", as: \"forme\" } }, { $unwind: \"$formateur\" }, { $unwind: \"$forme\" }, { $project: { _id: 0, formateur_prenom: \"$formateur.prenom\", formateur_nom: \"$formateur.nom\", forme_prenom: \"$forme.prenom\", forme_nom: \"$forme.nom\", date_debut: 1 } } ])",
+    "orderMatters": false
+  },
+  {
+    "code": "resm-3-10",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 3,
+    "position": 1,
+    "title": "Chambres par capacité",
+    "statement": "Affichez, pour chaque capacité de chambre (1, 2, 3 personnes...), le nombre de chambres correspondantes, par capacité croissante.\n\nCollection utile : `chambre`.\n\nIndice : `$group` est l'équivalent de `GROUP BY` : `_id` est la clé de regroupement, les autres champs des accumulateurs (`{ nb: { $sum: 1 } }` compte les documents).\n\nLe graphique se construit à partir du résultat : la première colonne donne les libellés, la seconde les valeurs.",
+    "referenceQuery": "db.chambre.aggregate([ { $group: { _id: \"$capacite\", nb_chambres: { $sum: 1 } } }, { $sort: { _id: 1 } } ])",
+    "orderMatters": true,
+    "chart": {
+      "type": "BAR",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "resm-3-11",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 3,
+    "position": 2,
+    "title": "Capacité d'accueil par bâtiment",
+    "statement": "Affichez le nom de chaque bâtiment et sa capacité totale d'accueil (somme des capacités de ses chambres), triés par nom de bâtiment.\n\nCollection utile : `chambre` : le nom du bâtiment y est recopié.",
+    "referenceQuery": "db.chambre.aggregate([ { $group: { _id: \"$batiment.nom\", capacite_totale: { $sum: \"$capacite\" } } }, { $sort: { _id: 1 } } ])",
+    "orderMatters": true,
+    "chart": {
+      "type": "BAR",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "resm-3-12",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 3,
+    "position": 3,
+    "title": "Réservations par type de repas",
+    "statement": "Affichez le type de repas et le nombre de réservations non annulées correspondantes, du type le plus réservé au moins réservé.\n\nCollection utile : `reservation` : le type du repas y est recopié (`repas.type`).\n\nIndice : `$match` avant `$group` joue le rôle du `WHERE`.",
+    "referenceQuery": "db.reservation.aggregate([ { $match: { annulee: false } }, { $group: { _id: \"$repas.type\", nb_reservations: { $sum: 1 } } }, { $sort: { nb_reservations: -1 } } ])",
+    "orderMatters": true,
+    "chart": {
+      "type": "DOUGHNUT",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "resm-3-13",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 3,
+    "position": 4,
+    "title": "Fréquentation mois par mois",
+    "statement": "Pour l'année universitaire 2025-2026 (repas servis avant le 1er juillet 2026), affichez l'année, le mois et le nombre de réservations non annulées, dans l'ordre chronologique.\n\nCollection utile : `reservation` (date du repas : `repas.date_heure`).\n\nIndice : la clé de regroupement peut être un document : `_id: { annee: { $year: \"$repas.date_heure\" }, mois: { $month: \"$repas.date_heure\" } }`. Un `$project` final remet l'année et le mois dans des champs séparés.",
+    "referenceQuery": "db.reservation.aggregate([ { $match: { annulee: false, \"repas.date_heure\": { $lt: ISODate(\"2026-07-01\") } } }, { $group: { _id: { annee: { $year: \"$repas.date_heure\" }, mois: { $month: \"$repas.date_heure\" } }, nb_reservations: { $sum: 1 } } }, { $sort: { \"_id.annee\": 1, \"_id.mois\": 1 } }, { $project: { _id: 0, annee: \"$_id.annee\", mois: \"$_id.mois\", nb_reservations: 1 } } ])",
+    "orderMatters": true,
+    "chart": {
+      "type": "LINE",
+      "labelColumns": 2
+    }
+  },
+  {
+    "code": "resm-3-14",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 3,
+    "position": 5,
+    "title": "Contraintes alimentaires déclarées",
+    "statement": "Affichez le libellé de chaque contrainte alimentaire et le nombre d'étudiants l'ayant déclarée, de la plus fréquente à la moins fréquente. En cas d'égalité, triez par libellé.\n\nCollections utiles : `contrainte_alimentaire` et `etudiant` (tableau `contraintes` de libellés).\n\nLes contraintes déclarées par aucun étudiant doivent apparaître avec 0 : partez de `contrainte_alimentaire`, faites un `$lookup` vers `etudiant` (`localField: \"libelle\", foreignField: \"contraintes\"` : la correspondance fonctionne aussi avec un tableau), puis comptez avec `$size`.",
+    "referenceQuery": "db.contrainte_alimentaire.aggregate([ { $lookup: { from: \"etudiant\", localField: \"libelle\", foreignField: \"contraintes\", as: \"etudiants\" } }, { $project: { _id: 0, libelle: 1, nb_etudiants: { $size: \"$etudiants\" } } }, { $sort: { nb_etudiants: -1, libelle: 1 } } ])",
+    "orderMatters": true,
+    "chart": {
+      "type": "HORIZONTAL_BAR",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "resm-3-15",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 3,
+    "position": 6,
+    "title": "Prix moyen par type de plat",
+    "statement": "Affichez le type de plat et le prix indicatif moyen de ses plats, arrondi à 2 décimales, du type le plus cher au moins cher.\n\nCollection utile : `plat`.",
+    "referenceQuery": "db.plat.aggregate([ { $group: { _id: \"$type\", prix_moyen: { $avg: \"$prix_indicatif\" } } }, { $project: { prix_moyen: { $round: [\"$prix_moyen\", 2] } } }, { $sort: { prix_moyen: -1 } } ])",
+    "orderMatters": true,
+    "chart": {
+      "type": "BAR",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "resm-3-16",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 3,
+    "position": 7,
+    "title": "Les absents récidivistes",
+    "statement": "Un étudiant est absent lorsqu'il a réservé un repas (réservation non annulée) mais n'est pas venu manger (`present` faux).\n\nAffichez le prénom, le nom et le nombre d'absences des étudiants ayant au moins 20 absences, du plus grand nombre d'absences au plus petit.\n\nCollection utile : `reservation` (l'étudiant y est recopié).\n\nIndice : un `$match` **après** le `$group` joue le rôle du `HAVING`. Regroupez par identifiant d'étudiant (deux homonymes restent distincts) et récupérez prénom et nom avec l'accumulateur `$first`.",
+    "referenceQuery": "db.reservation.aggregate([ { $match: { annulee: false, present: false } }, { $group: { _id: \"$etudiant._id\", prenom: { $first: \"$etudiant.prenom\" }, nom: { $first: \"$etudiant.nom\" }, nb_absences: { $sum: 1 } } }, { $match: { nb_absences: { $gte: 20 } } }, { $sort: { nb_absences: -1 } }, { $project: { _id: 0, prenom: 1, nom: 1, nb_absences: 1 } } ])",
+    "orderMatters": false,
+    "chart": {
+      "type": "BAR",
+      "labelColumns": 2
+    }
+  },
+  {
+    "code": "resm-3-17",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 3,
+    "position": 8,
+    "title": "Recettes élaborées",
+    "statement": "Affichez le nom et le nombre d'ingrédients des plats nécessitant au moins 5 ingrédients, du plus grand nombre au plus petit.\n\nCollection utile : `plat`.\n\nIndice : nul besoin de `$group` : les ingrédients sont déjà dans le document. `$size` donne la longueur d'un tableau.",
+    "referenceQuery": "db.plat.aggregate([ { $project: { _id: 0, nom: 1, nb_ingredients: { $size: \"$ingredients\" } } }, { $match: { nb_ingredients: { $gte: 5 } } }, { $sort: { nb_ingredients: -1 } } ])",
+    "orderMatters": false,
+    "chart": {
+      "type": "HORIZONTAL_BAR",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "resm-3-18",
+    "engine": "MONGODB",
+    "datasource": 1,
+    "level": 3,
+    "position": 9,
+    "title": "Les événements les plus coûteux",
+    "statement": "Affichez le nom de chaque événement dont le total des dépenses dépasse 300 €, avec ce total, du plus coûteux au moins coûteux.\n\nCollection utile : `evenement` (tableau `depenses`).\n\nIndice : appliqué à un tableau, `{ $sum: \"$depenses.montant\" }` additionne les montants de tous ses éléments.",
+    "referenceQuery": "db.evenement.aggregate([ { $project: { _id: 0, nom: 1, total_depenses: { $sum: \"$depenses.montant\" } } }, { $match: { total_depenses: { $gt: 300 } } }, { $sort: { total_depenses: -1 } } ])",
+    "orderMatters": true,
+    "chart": {
+      "type": "BAR",
+      "labelColumns": 1
+    }
+  }
+]

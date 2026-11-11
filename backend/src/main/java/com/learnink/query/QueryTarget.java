@@ -4,7 +4,7 @@ import com.learnink.security.AuthenticatedUser;
 
 /**
  * Où exécuter une requête : la source de données affectée à l'utilisateur (1, 2...).
- * L'identifiant de l'utilisateur permettra aux moteurs "une base par étudiant" (Firestore) de cibler la sienne.
+ * L'identifiant de l'utilisateur permet aux moteurs « une base par étudiant » (MongoDB) de cibler la sienne.
  */
 public record QueryTarget(int datasource, Long userId) {
 

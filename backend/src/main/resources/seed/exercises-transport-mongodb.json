@@ -1,0 +1,324 @@
+[
+  {
+    "code": "tram-1-01",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 1,
+    "position": 1,
+    "title": "Le réseau d'agences",
+    "statement": "Affichez le nom et la ville de toutes les agences, triées par ville puis par nom.\n\nCollection utile : `agence`.\n\nEn MongoDB, `find(filtre, projection)` : le filtre `{}` garde tous les documents, la projection choisit les champs (`1` pour garder, `_id: 0` pour retirer l'identifiant, toujours renvoyé sinon). `.sort({ a: 1, b: 1 })` trie sur plusieurs champs.",
+    "referenceQuery": "db.agence.find({}, { _id: 0, nom: 1, ville: 1 }).sort({ ville: 1, nom: 1 })",
+    "orderMatters": true
+  },
+  {
+    "code": "tram-1-02",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 1,
+    "position": 2,
+    "title": "Les gros porteurs",
+    "statement": "Affichez l'immatriculation et la capacité de chargement des véhicules pouvant transporter au moins 1 000 kg, de la plus grande capacité à la plus petite. En cas d'égalité, triez par immatriculation.\n\nCollection utile : `vehicule`.\n\nIndice : `{ capacite_kg: { $gte: 1000 } }` ; dans `sort`, `-1` trie par ordre décroissant.",
+    "referenceQuery": "db.vehicule.find({ capacite_kg: { $gte: 1000 } }, { _id: 0, immatriculation: 1, capacite_kg: 1 }).sort({ capacite_kg: -1, immatriculation: 1 })",
+    "orderMatters": true
+  },
+  {
+    "code": "tram-1-03",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 1,
+    "position": 3,
+    "title": "Colis fragiles et lourds",
+    "statement": "Affichez l'identifiant (`_id`) et le poids des colis fragiles pesant plus de 10 kg.\n\nCollection utile : `colis`.\n\nIndice : plusieurs conditions dans le même filtre se combinent comme un `AND`.",
+    "referenceQuery": "db.colis.find({ fragile: true, poids_kg: { $gt: 10 } }, { poids_kg: 1 })",
+    "orderMatters": false
+  },
+  {
+    "code": "tram-1-04",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 1,
+    "position": 4,
+    "title": "Coût de trajet inconnu",
+    "statement": "Le coût de certains trajets n'est pas renseigné (`null`). Affichez l'identifiant (`_id`), le libellé et la distance de ces trajets.\n\nCollection utile : `trajet`.\n\nIndice : `{ cout: null }` garde les documents dont le champ vaut `null` ou n'existe pas.",
+    "referenceQuery": "db.trajet.find({ cout: null }, { libelle: 1, distance_km: 1 })",
+    "orderMatters": false
+  },
+  {
+    "code": "tram-1-05",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 1,
+    "position": 5,
+    "title": "Les urgences d'octobre",
+    "statement": "Affichez la référence et la date de création des expéditions de priorité « Urgente » créées en octobre 2026, dans l'ordre chronologique.\n\nCollection utile : `expedition`.\n\nIndice : les dates s'écrivent `ISODate(\"2026-10-01\")` ; combinez deux opérateurs sur le même champ : `{ $gte: ..., $lt: ... }`.",
+    "referenceQuery": "db.expedition.find({ priorite: \"Urgente\", date_creation: { $gte: ISODate(\"2026-10-01\"), $lt: ISODate(\"2026-11-01\") } }, { _id: 0, reference: 1, date_creation: 1 }).sort({ date_creation: 1 })",
+    "orderMatters": true
+  },
+  {
+    "code": "tram-1-06",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 1,
+    "position": 6,
+    "title": "Les clients professionnels",
+    "statement": "Affichez le nom (raison sociale) et l'email des clients professionnels, triés par nom.\n\nCollection utile : `client`.",
+    "referenceQuery": "db.client.find({ type_client: \"Professionnel\" }, { _id: 0, nom: 1, email: 1 }).sort({ nom: 1 })",
+    "orderMatters": true
+  },
+  {
+    "code": "tram-1-07",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 1,
+    "position": 7,
+    "title": "Avenue Jean Jaurès",
+    "statement": "Affichez la rue, le code postal et la ville de toutes les adresses situées avenue Jean Jaurès.\n\nCollection utile : `adresse`.\n\nIndice : l'équivalent de `LIKE '%Jean Jaurès%'` est une expression régulière : `{ rue: /Jean Jaurès/ }`.",
+    "referenceQuery": "db.adresse.find({ rue: /Jean Jaurès/ }, { _id: 0, rue: 1, code_postal: 1, ville: 1 })",
+    "orderMatters": false
+  },
+  {
+    "code": "tram-1-08",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 1,
+    "position": 8,
+    "title": "Combien de livraisons manquées ?",
+    "statement": "Comptez le nombre de tentatives de livraison qui n'ont pas abouti (résultat différent de « Livré »).\n\nCollection utile : `tentative_livraison`.\n\nIndice : `countDocuments(filtre)` ; « différent de » s'écrit `$ne`.",
+    "referenceQuery": "db.tentative_livraison.countDocuments({ resultat: { $ne: \"Livré\" } })",
+    "orderMatters": false
+  },
+  {
+    "code": "tram-1-09",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 1,
+    "position": 9,
+    "title": "Poids moyen d'un colis",
+    "statement": "Calculez le poids moyen d'un colis, arrondi à 2 décimales.\n\nCollection utile : `colis`.\n\nIndice : un calcul sur plusieurs documents passe par le pipeline d'agrégation : `aggregate([ { $group: { _id: null, moyenne: { $avg: \"$poids_kg\" } } } ])`. Arrondissez ensuite avec `$round` dans une étape `$project`.",
+    "referenceQuery": "db.colis.aggregate([ { $group: { _id: null, poids_moyen: { $avg: \"$poids_kg\" } } }, { $project: { _id: 0, poids_moyen: { $round: [\"$poids_moyen\", 2] } } } ])",
+    "orderMatters": false
+  },
+  {
+    "code": "tram-2-01",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 2,
+    "position": 1,
+    "title": "Le contenu d'une expédition",
+    "statement": "Affichez le numéro, le poids et l'indication de fragilité de chaque colis de l'expédition de référence « EXP-2026-00042 ».\n\nEn SQL, il fallait joindre `colis` et `expedition`. Ici, chaque colis contient une **référence étendue** vers son expédition (`expedition._id`, `expedition.reference`…) : une seule collection suffit.\n\nIndice : un champ de sous-document se filtre avec un point, entre guillemets : `{ \"expedition.reference\": ... }`.",
+    "referenceQuery": "db.colis.find({ \"expedition.reference\": \"EXP-2026-00042\" }, { _id: 0, numero: 1, poids_kg: 1, fragile: 1 })",
+    "orderMatters": false
+  },
+  {
+    "code": "tram-2-02",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 2,
+    "position": 2,
+    "title": "Expéditeurs et destinataires",
+    "statement": "Pour chaque expédition urgente créée en octobre 2026, affichez sa référence, le nom de l'expéditeur et le nom du destinataire.\n\nCollection utile : `expedition`. En SQL, il fallait joindre deux fois `client` ; ici, les noms sont recopiés dans `expediteur` et `destinataire`.",
+    "referenceQuery": "db.expedition.find({ priorite: \"Urgente\", date_creation: { $gte: ISODate(\"2026-10-01\"), $lt: ISODate(\"2026-11-01\") } }, { _id: 0, reference: 1, \"expediteur.nom\": 1, \"destinataire.nom\": 1 })",
+    "orderMatters": false
+  },
+  {
+    "code": "tram-2-03",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 2,
+    "position": 3,
+    "title": "Les trajets au départ de Lyon",
+    "statement": "Affichez, pour chaque trajet partant de l'agence de Lyon, le nom de l'agence d'arrivée, le libellé du trajet, sa distance et sa durée estimée.\n\nCollection utile : `trajet` : les agences de départ et d'arrivée y sont imbriquées.",
+    "referenceQuery": "db.trajet.find({ \"agence_depart.ville\": \"Lyon\" }, { _id: 0, \"agence_arrivee.nom\": 1, libelle: 1, distance_km: 1, duree_estimee_min: 1 })",
+    "orderMatters": false
+  },
+  {
+    "code": "tram-2-04",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 2,
+    "position": 4,
+    "title": "L'itinéraire d'une tournée",
+    "statement": "Affichez, dans l'ordre de passage, le numéro d'ordre, la rue et la ville de chaque arrêt de la tournée n°141.\n\nCollection utile : `tournee` : ses arrêts sont **imbriqués** dans le tableau `arrets`.\n\nIndice : dans un pipeline, `$match` filtre, `$unwind: \"$arrets\"` produit un document par arrêt, `$sort` trie et `$project` choisit les champs (`{ rue: \"$arrets.adresse.rue\" }` renomme).",
+    "referenceQuery": "db.tournee.aggregate([ { $match: { _id: 141 } }, { $unwind: \"$arrets\" }, { $sort: { \"arrets.ordre\": 1 } }, { $project: { _id: 0, ordre: \"$arrets.ordre\", rue: \"$arrets.adresse.rue\", ville: \"$arrets.adresse.ville\" } } ])",
+    "orderMatters": true
+  },
+  {
+    "code": "tram-2-05",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 2,
+    "position": 5,
+    "title": "Spécialistes des produits fragiles",
+    "statement": "Affichez le prénom et le nom des livreurs ayant la spécialisation « Produits fragiles ».\n\nCollection utile : `employe` : ses spécialisations forment un tableau de sous-documents.\n\nIndice : `{ \"specialisations.libelle\": \"Produits fragiles\" }` cherche dans tous les éléments du tableau.",
+    "referenceQuery": "db.employe.find({ \"specialisations.libelle\": \"Produits fragiles\" }, { _id: 0, prenom: 1, nom: 1 })",
+    "orderMatters": false
+  },
+  {
+    "code": "tram-2-06",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 2,
+    "position": 6,
+    "title": "Le parcours d'un colis",
+    "statement": "Reconstituez le parcours du colis n°1 de l'expédition « EXP-2026-00042 » : date et heure, statut et agence de chaque événement de suivi, dans l'ordre chronologique.\n\nCollection utile : `colis` : l'historique de suivi y est imbriqué (tableau `suivi`). La remise au destinataire n'a lieu dans aucune agence : son agence vaut `null`, mais l'événement doit apparaître.",
+    "referenceQuery": "db.colis.aggregate([ { $match: { \"expedition.reference\": \"EXP-2026-00042\", numero: 1 } }, { $unwind: \"$suivi\" }, { $sort: { \"suivi.date_heure\": 1 } }, { $project: { _id: 0, date_heure: \"$suivi.date_heure\", statut: \"$suivi.statut\", agence: \"$suivi.agence\" } } ])",
+    "orderMatters": true
+  },
+  {
+    "code": "tram-2-07",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 2,
+    "position": 7,
+    "title": "Véhicules jamais immobilisés",
+    "statement": "Affichez l'immatriculation des véhicules qui n'ont jamais été indisponibles (ni panne, ni maintenance).\n\nCollection utile : `vehicule` : ses indisponibilités y sont imbriquées. En SQL, il fallait un `LEFT JOIN` ; ici, il suffit de tester le tableau.\n\nIndice : `{ indisponibilites: { $size: 0 } }`.",
+    "referenceQuery": "db.vehicule.find({ indisponibilites: { $size: 0 } }, { _id: 0, immatriculation: 1 })",
+    "orderMatters": false
+  },
+  {
+    "code": "tram-2-08",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 2,
+    "position": 8,
+    "title": "Qui a formé qui ?",
+    "statement": "La collection `formation` relie deux employés par leurs identifiants : le formateur (`formateur_id`) et le livreur formé (`forme_id`).\n\nAffichez, pour chaque formation, le prénom et le nom du formateur, le prénom et le nom du livreur formé, et le résultat de la formation.\n\nIndice : `$lookup` est la jointure de MongoDB : `{ $lookup: { from: \"employe\", localField: \"formateur_id\", foreignField: \"_id\", as: \"formateur\" } }`. Faites-en deux, puis `$unwind` sur chacun pour passer du tableau au document.",
+    "referenceQuery": "db.formation.aggregate([ { $lookup: { from: \"employe\", localField: \"formateur_id\", foreignField: \"_id\", as: \"formateur\" } }, { $lookup: { from: \"employe\", localField: \"forme_id\", foreignField: \"_id\", as: \"forme\" } }, { $unwind: \"$formateur\" }, { $unwind: \"$forme\" }, { $project: { _id: 0, formateur_prenom: \"$formateur.prenom\", formateur_nom: \"$formateur.nom\", forme_prenom: \"$forme.prenom\", forme_nom: \"$forme.nom\", resultat: 1 } } ])",
+    "orderMatters": false
+  },
+  {
+    "code": "tram-3-01",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 3,
+    "position": 1,
+    "title": "La flotte par type de véhicule",
+    "statement": "Affichez chaque type de véhicule et le nombre de véhicules de ce type, du plus nombreux au moins nombreux. En cas d'égalité, triez par type.\n\nCollection utile : `vehicule`.\n\nIndice : `$group` est l'équivalent de `GROUP BY` : `_id` est la clé de regroupement, les autres champs des accumulateurs (`{ nb: { $sum: 1 } }` compte les documents).\n\nLe graphique se construit à partir du résultat : la première colonne donne les libellés, la seconde les valeurs.",
+    "referenceQuery": "db.vehicule.aggregate([ { $group: { _id: \"$type\", nb_vehicules: { $sum: 1 } } }, { $sort: { nb_vehicules: -1, _id: 1 } } ])",
+    "orderMatters": true,
+    "chart": {
+      "type": "BAR",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "tram-3-02",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 3,
+    "position": 2,
+    "title": "Expéditions par service",
+    "statement": "Affichez le nom de chaque service et le nombre d'expéditions qui l'ont choisi, du plus demandé au moins demandé. En cas d'égalité, triez par nom.\n\nCollection utile : `expedition` (le nom du service y est recopié).",
+    "referenceQuery": "db.expedition.aggregate([ { $group: { _id: \"$service.nom\", nb_expeditions: { $sum: 1 } } }, { $sort: { nb_expeditions: -1, _id: 1 } } ])",
+    "orderMatters": true,
+    "chart": {
+      "type": "DOUGHNUT",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "tram-3-03",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 3,
+    "position": 3,
+    "title": "L'activité mois par mois",
+    "statement": "Affichez l'année, le mois et le nombre d'expéditions créées, dans l'ordre chronologique.\n\nCollection utile : `expedition`.\n\nIndice : la clé de regroupement peut être un document : `_id: { annee: { $year: \"$date_creation\" }, mois: { $month: \"$date_creation\" } }`. Un `$project` final remet l'année et le mois dans des champs séparés.",
+    "referenceQuery": "db.expedition.aggregate([ { $group: { _id: { annee: { $year: \"$date_creation\" }, mois: { $month: \"$date_creation\" } }, nb_expeditions: { $sum: 1 } } }, { $sort: { \"_id.annee\": 1, \"_id.mois\": 1 } }, { $project: { _id: 0, annee: \"$_id.annee\", mois: \"$_id.mois\", nb_expeditions: 1 } } ])",
+    "orderMatters": true,
+    "chart": {
+      "type": "LINE",
+      "labelColumns": 2
+    }
+  },
+  {
+    "code": "tram-3-04",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 3,
+    "position": 4,
+    "title": "Poids moyen par service",
+    "statement": "Affichez le nom de chaque service et le poids moyen de ses colis, arrondi à 2 décimales, du plus lourd au plus léger. En cas d'égalité, triez par nom.\n\nCollection utile : `colis` (le service de l'expédition y est recopié : `expedition.service`).",
+    "referenceQuery": "db.colis.aggregate([ { $group: { _id: \"$expedition.service\", poids_moyen: { $avg: \"$poids_kg\" } } }, { $project: { poids_moyen: { $round: [\"$poids_moyen\", 2] } } }, { $sort: { poids_moyen: -1, _id: 1 } } ])",
+    "orderMatters": true,
+    "chart": {
+      "type": "BAR",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "tram-3-05",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 3,
+    "position": 5,
+    "title": "Résultat des tentatives",
+    "statement": "Affichez chaque résultat de tentative de livraison et le nombre de tentatives correspondantes, du plus fréquent au moins fréquent. En cas d'égalité, triez par résultat.\n\nCollection utile : `tentative_livraison`.",
+    "referenceQuery": "db.tentative_livraison.aggregate([ { $group: { _id: \"$resultat\", nb_tentatives: { $sum: 1 } } }, { $sort: { nb_tentatives: -1, _id: 1 } } ])",
+    "orderMatters": true,
+    "chart": {
+      "type": "HORIZONTAL_BAR",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "tram-3-06",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 3,
+    "position": 6,
+    "title": "Les livreurs de chaque agence",
+    "statement": "Affichez le nom de chaque agence et le nombre de livreurs qui y sont actuellement affectés (affectation dont `date_fin` vaut `null`), triés par nom d'agence.\n\nCollection utile : `employe` (tableau `affectations`).\n\nIndice : filtrez les livreurs, `$unwind` les affectations, gardez celles en cours, puis regroupez par nom d'agence.",
+    "referenceQuery": "db.employe.aggregate([ { $match: { fonction: \"Livreur\" } }, { $unwind: \"$affectations\" }, { $match: { \"affectations.date_fin\": null } }, { $group: { _id: \"$affectations.agence.nom\", nb_livreurs: { $sum: 1 } } }, { $sort: { _id: 1 } } ])",
+    "orderMatters": true,
+    "chart": {
+      "type": "BAR",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "tram-3-07",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 3,
+    "position": 7,
+    "title": "Les clients fidèles",
+    "statement": "Affichez le nom et le nombre d'expéditions envoyées des clients ayant envoyé au moins 47 expéditions, du plus grand nombre au plus petit.\n\nCollection utile : `expedition`.\n\nIndice : un `$match` **après** le `$group` joue le rôle du `HAVING`. Regroupez par identifiant d'expéditeur et récupérez son nom avec l'accumulateur `$first`.",
+    "referenceQuery": "db.expedition.aggregate([ { $group: { _id: \"$expediteur._id\", nom: { $first: \"$expediteur.nom\" }, nb_expeditions: { $sum: 1 } } }, { $match: { nb_expeditions: { $gte: 47 } } }, { $sort: { nb_expeditions: -1 } }, { $project: { _id: 0, nom: 1, nb_expeditions: 1 } } ])",
+    "orderMatters": false,
+    "chart": {
+      "type": "HORIZONTAL_BAR",
+      "labelColumns": 1
+    }
+  },
+  {
+    "code": "tram-3-08",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 3,
+    "position": 8,
+    "title": "Les livraisons manquées par livreur",
+    "statement": "Affichez le prénom, le nom et le nombre de tentatives non abouties (résultat différent de « Livré ») des livreurs en comptant au moins 14, du plus grand nombre au plus petit.\n\nCollection utile : `tentative_livraison` (le livreur y est recopié).",
+    "referenceQuery": "db.tentative_livraison.aggregate([ { $match: { resultat: { $ne: \"Livré\" } } }, { $group: { _id: \"$livreur._id\", prenom: { $first: \"$livreur.prenom\" }, nom: { $first: \"$livreur.nom\" }, nb_echecs: { $sum: 1 } } }, { $match: { nb_echecs: { $gte: 14 } } }, { $sort: { nb_echecs: -1 } }, { $project: { _id: 0, prenom: 1, nom: 1, nb_echecs: 1 } } ])",
+    "orderMatters": false,
+    "chart": {
+      "type": "BAR",
+      "labelColumns": 2
+    }
+  },
+  {
+    "code": "tram-3-09",
+    "engine": "MONGODB",
+    "datasource": 2,
+    "level": 3,
+    "position": 9,
+    "title": "Les agences aux départs en retard",
+    "statement": "Une opération de transport est en retard lorsque son arrivée réelle est postérieure à son arrivée prévue.\n\nAffichez le nom de chaque agence de départ et le nombre d'opérations arrivées en retard, pour les agences en comptant au moins 110, de la plus touchée à la moins touchée. En cas d'égalité, triez par nom.\n\nCollection utile : `operation_transport` (l'agence de départ est recopiée dans `trajet.agence_depart`).\n\nIndice : `$expr` compare deux champs d'un même document : `{ $expr: { $gt: [\"$arrivee_reelle\", \"$arrivee_prevue\"] } }`.",
+    "referenceQuery": "db.operation_transport.aggregate([ { $match: { $expr: { $gt: [\"$arrivee_reelle\", \"$arrivee_prevue\"] } } }, { $group: { _id: \"$trajet.agence_depart\", nb_retards: { $sum: 1 } } }, { $match: { nb_retards: { $gte: 110 } } }, { $sort: { nb_retards: -1, _id: 1 } } ])",
+    "orderMatters": true,
+    "chart": {
+      "type": "BAR",
+      "labelColumns": 1
+    }
+  }
+]
